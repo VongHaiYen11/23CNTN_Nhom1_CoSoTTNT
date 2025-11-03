@@ -16,7 +16,7 @@ def firefly_optimize(
     if seed is not None:
         np.random.seed(seed)
 
-    # === 1️⃣ Khởi tạo quần thể ===
+    # === 1 Khởi tạo quần thể ===
     fireflies = lower_bound + (upper_bound - lower_bound) * np.random.rand(population_size, dimension)
     intensity = np.apply_along_axis(objective_function, 1, fireflies)
 
@@ -26,7 +26,7 @@ def firefly_optimize(
     best_fitness = intensity[best_idx]
     fitness_history = [best_fitness]
 
-    # === 2️⃣ Vòng lặp chính ===
+    # === 2 Vòng lặp chính ===
     for iteration in range(max_iterations):
         alpha *= 0.97  # giảm dần mức độ ngẫu nhiên theo iteration
 
@@ -58,7 +58,7 @@ def firefly_optimize(
         if (iteration + 1) % 10 == 0 or iteration == 0:
             print(f"Iteration {iteration+1}/{max_iterations}, Best Fitness = {best_fitness:.6f}")
 
-    # === 3️⃣ Trả kết quả ===
+    # === 3 Trả kết quả ===
     print("\n--- Optimization Results (FA) ---")
     print(f"Best Fitness: {best_fitness}")
     print(f"Best Solution: {best_solution}")
