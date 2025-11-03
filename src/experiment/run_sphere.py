@@ -11,8 +11,8 @@ from src.algorithms.ABC import abc_optimize
 from src.problem.continuous.sphere import sphere
 
 # ==== Cấu hình ====
-POP_SIZE = 30
-MAX_ITERATIONS = 100
+POP_SIZE = 100
+MAX_ITERATIONS = 200
 SEED = 42
 DIM = 30
 LOWER_BOUND = -5.12
@@ -23,7 +23,7 @@ def run_sphere():
     print("\n--- CHẠY THÍ NGHIỆM - SPHERE FUNCTION ---")
     print(f"Pop Size = {POP_SIZE}, Max Iterations = {MAX_ITERATIONS}\n")
 
-    # === 1 Thiết lập các thuật toán cần chạy ===
+    # === Thiết lập các thuật toán cần chạy ===
     algorithms_to_run = {
         "FA": firefly_optimize,
         "ABC": abc_optimize
@@ -88,7 +88,7 @@ def run_sphere():
     )
     results["ABC"] = {"Thuật toán": "ABC", "Best Fitness": abc_fit, "Thời gian (s)": time.time() - start}
 
-    # # === 3 Lưu file CSV ===
+    # # === Lưu file CSV ===
     # os.makedirs("results", exist_ok=True)
     # timestamp = time.strftime("%Y%m%d-%H%M%S")
     # csv_path = f"results/sphere_results_{timestamp}.csv"

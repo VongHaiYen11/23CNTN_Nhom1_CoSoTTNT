@@ -5,9 +5,9 @@ def abc_optimize(
     lower_bound=-5.12,
     upper_bound=5.12,
     problem_size=30,
-    num_employed_bees=50,
-    num_onlooker_bees=50,
-    max_iterations=100,
+    num_employed_bees=100,
+    num_onlooker_bees=100,
+    max_iterations=200,
     limit=50,
     seed=None
 ):
