@@ -55,8 +55,8 @@ def firefly_optimize(
         best_fitness = intensity[best_idx]
         fitness_history.append(best_fitness)
 
-        if (iteration + 1) % 10 == 0 or iteration == 0:
-            print(f"Iteration {iteration+1}/{max_iterations}, Best Fitness = {best_fitness:.6f}")
+        # if (iteration + 1) % 10 == 0 or iteration == 0:
+        #     print(f"Iteration {iteration+1}/{max_iterations}, Best Fitness = {best_fitness:.6f}")
 
     # === Trả kết quả ===
     print("\n--- Optimization Results (FA) ---")

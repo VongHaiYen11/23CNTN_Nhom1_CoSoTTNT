@@ -6,6 +6,8 @@ import pandas as pd
 # ==== Import các thuật toán ====
 from src.algorithms.FA import firefly_optimize
 from src.algorithms.ABC import abc_optimize
+from src.algorithms.Cuckoo import cuckoo_optimize
+from src.algorithms.PSO import pso_optimize
 
 # ==== Import bài toán ====
 from src.problem.continuous.sphere import sphere
@@ -58,19 +60,19 @@ def run_sphere():
 
     #     print(f"Kết quả {name}: Fitness = {best_fit:.6f}, Thời gian = {elapsed:.3f}s")
 
-    # ===== Firefly Algorithm =====
-    print("\n--- Đang chạy FA ---")
-    start = time.time()
-    fa_sol, fa_fit, fa_hist = firefly_optimize(
-        objective_function=sphere,
-        lower_bound=LOWER_BOUND,
-        upper_bound=UPPER_BOUND,
-        dimension=DIM,
-        population_size=POP_SIZE,
-        max_iterations=MAX_ITERATIONS,
-        seed=SEED
-    )
-    results["FA"] = {"Thuật toán": "FA", "Best Fitness": fa_fit, "Thời gian (s)": time.time() - start}
+    #===== Firefly Algorithm =====
+    # print("\n--- Đang chạy FA ---")
+    # start = time.time()
+    # fa_sol, fa_fit, fa_hist = firefly_optimize(
+    #     objective_function=sphere,
+    #     lower_bound=LOWER_BOUND,
+    #     upper_bound=UPPER_BOUND,
+    #     dimension=DIM,
+    #     population_size=POP_SIZE,
+    #     max_iterations=MAX_ITERATIONS,
+    #     seed=SEED
+    # )
+    # results["FA"] = {"Thuật toán": "FA", "Best Fitness": fa_fit, "Thời gian (s)": time.time() - start}
 
     # ===== Artificial Bee Colony =====
     print("\n--- Đang chạy ABC ---")
@@ -87,6 +89,34 @@ def run_sphere():
         seed=SEED
     )
     results["ABC"] = {"Thuật toán": "ABC", "Best Fitness": abc_fit, "Thời gian (s)": time.time() - start}
+
+    # ===== Cuckoo =====
+    print("\n--- Đang chạy Cuckoo ---")
+    start = time.time()
+    best_sol, Cuckoo_fit = cuckoo_optimize(
+    fitness_func=sphere,
+    xmin=-5.12,
+    xmax=5.12,
+    dimension=DIM,
+    population_size=POP_SIZE,
+    max_iterations=MAX_ITERATIONS,
+    seed=42
+    )
+    results["Cuckoo"] = {"Thuật toán": "Cuckoo", "Best Fitness": Cuckoo_fit, "Thời gian (s)": time.time() - start}
+
+    # ===== Particle Swarm Optimization =====
+    print("\n--- Đang chạy PSO ---")
+    start = time.time()
+    best_pos, best_val, hist = pso_optimize(
+    objective_function=sphere,
+    lower_bound=LOWER_BOUND,
+    upper_bound=UPPER_BOUND,
+    dimension=DIM,
+    population_size=POP_SIZE,
+    max_iterations=MAX_ITERATIONS,
+    seed=SEED
+)
+    results["PSO"] = {"Thuật toán": "PSO", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
 
     # # === Lưu file CSV ===
     # os.makedirs("results", exist_ok=True)
