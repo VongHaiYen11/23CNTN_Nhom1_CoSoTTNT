@@ -4,8 +4,8 @@ import os
 import pandas as pd
 
 # ==== Import các thuật toán ====
-from src.algorithms.ABC import abc_optimize
-from src.algorithms.FA import firefly_optimize  
+from src.algorithms.swarm_algorithms.ABC import abc_optimize
+from src.algorithms.swarm_algorithms.FA import firefly_optimize  
 # ==== Import bài toán ====
 from src.problem.discrete.knapsack import knapsack_fitness, generate_knapsack_problem
 

@@ -4,10 +4,10 @@ import os
 import pandas as pd
 
 # ==== Import các thuật toán ====
-from src.algorithms.FA import firefly_optimize
-from src.algorithms.ABC import abc_optimize
-from src.algorithms.Cuckoo import cs_optimize
-from src.algorithms.PSO import pso_optimize
+from src.algorithms.swarm_algorithms.FA import firefly_optimize
+from src.algorithms.swarm_algorithms.ABC import abc_optimize
+from src.algorithms.swarm_algorithms.Cuckoo import cs_optimize
+from src.algorithms.swarm_algorithms.PSO import pso_optimize
 
 # ==== Import bài toán ====
 from src.problem.continuous.sphere import sphere
