@@ -6,14 +6,14 @@ import pandas as pd
 # ==== Import các thuật toán ====
 from src.algorithms.FA import firefly_optimize
 from src.algorithms.ABC import abc_optimize
-from src.algorithms.Cuckoo import cuckoo_optimize
+from src.algorithms.Cuckoo import cs_optimize
 from src.algorithms.PSO import pso_optimize
 
 # ==== Import bài toán ====
 from src.problem.continuous.sphere import sphere
 
 # ==== Cấu hình ====
-POP_SIZE = 100
+POP_SIZE = 200
 MAX_ITERATIONS = 200
 SEED = 42
 DIM = 30
@@ -93,13 +93,13 @@ def run_sphere():
     # ===== Cuckoo =====
     print("\n--- Đang chạy Cuckoo ---")
     start = time.time()
-    best_sol, Cuckoo_fit = cuckoo_optimize(
+    best_sol, Cuckoo_fit = cs_optimize(
     fitness_func=sphere,
     xmin=-5.12,
     xmax=5.12,
-    dimension=DIM,
+    dim=DIM,
     population_size=POP_SIZE,
-    max_iterations=MAX_ITERATIONS,
+    max_iter=5000,
     seed=42
     )
     results["Cuckoo"] = {"Thuật toán": "Cuckoo", "Best Fitness": Cuckoo_fit, "Thời gian (s)": time.time() - start}
