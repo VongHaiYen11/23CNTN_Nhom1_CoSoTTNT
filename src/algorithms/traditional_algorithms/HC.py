@@ -34,7 +34,7 @@ def hill_climbing_optimize(fitness_func, x_min, x_max, dimension, max_iteration=
     x_min = np.array(x_min)
     x_max = np.array(x_max)
     current_solution = np.random.uniform(x_min, x_max, size=dimension)
-    best_fitness = fitness_func(current_solution)
+    current_fitness = fitness_func(current_solution)
 
     for iteration in range(max_iteration):
         # Sinh neighbors quanh nghiệm hiện tại
@@ -52,16 +52,16 @@ def hill_climbing_optimize(fitness_func, x_min, x_max, dimension, max_iteration=
         neighbors = neighbors[idx]
 
         # Cập nhật nghiệm tốt nhất nếu có cải thiện
-        if fitness_func(neighbors[0]) < best_fitness:
-            best_solution = neighbors[0]
-            best_fitness = fitness_func(neighbors[0])
+        if fitness_func(neighbors[0]) < current_fitness:
+            current_solution = neighbors[0]
+            current_fitness = fitness_func(neighbors[0])
         else:
             break
 
         if verbose:
-            print(f"Iteration {iteration + 1}: best fitness = {best_fitness:.6f}")
+            print(f"Iteration {iteration + 1}: best fitness = {current_fitness:.6f}")
 
-        if best_fitness < error:
+        if current_fitness < error:
             break
 
-    return best_solution, best_fitness
+    return current_solution, current_fitness
