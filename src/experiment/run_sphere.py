@@ -8,6 +8,9 @@ from src.algorithms.swarm_algorithms.FA import firefly_optimize
 from src.algorithms.swarm_algorithms.ABC import abc_optimize
 from src.algorithms.swarm_algorithms.Cuckoo import cs_optimize
 from src.algorithms.swarm_algorithms.PSO import pso_optimize
+from src.algorithms.traditional_algorithms.GA import genetic_algorithm_optimize
+from src.algorithms.traditional_algorithms.HC import hill_climbing_optimize
+from src.algorithms.traditional_algorithms.SA import simulated_annealing_optimize
 
 # ==== Import bài toán ====
 from src.problem.continuous.sphere import sphere
@@ -115,8 +118,48 @@ def run_sphere():
     population_size=POP_SIZE,
     max_iterations=MAX_ITERATIONS,
     seed=SEED
-)
+    )
     results["PSO"] = {"Thuật toán": "PSO", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
+
+    # ==== Hill climbing ====
+    print("\n--- Đang chạy HC ---")
+    start = time.time()
+    best_hc, best_val = hill_climbing_optimize(
+    fitness_func=sphere,
+    x_min=LOWER_BOUND,
+    x_max=UPPER_BOUND,
+    dimension=DIM,
+    max_iteration=MAX_ITERATIONS,
+    seed=SEED
+    )
+    results["HC"] = {"Thuật toán": "HC", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
+
+    # ==== Genetic Algorithm ====
+    print("\n--- Đang chạy GA ---")
+    start = time.time()
+    best_ga, best_val = genetic_algorithm_optimize(
+    fitness_func=sphere,
+    x_min=LOWER_BOUND,
+    x_max=UPPER_BOUND,
+    dimension=DIM,
+    npopulation=POP_SIZE,
+    max_iteration=MAX_ITERATIONS,
+    seed=SEED
+    )
+    results["GA"] = {"Thuật toán": "GA", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
+
+    # ==== Simulated Annealing ====
+    print("\n--- Đang chạy SA ---")
+    start = time.time()
+    best_sa, best_val = simulated_annealing_optimize(
+    fitness_func=sphere,
+    x_min=LOWER_BOUND,
+    x_max=UPPER_BOUND,
+    dimension=DIM,
+    max_iteration=70000,
+    seed=SEED
+    )
+    results["SA"] = {"Thuật toán": "SA", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
 
     # # === Lưu file CSV ===
     # os.makedirs("results", exist_ok=True)
