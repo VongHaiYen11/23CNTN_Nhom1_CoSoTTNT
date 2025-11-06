@@ -3,7 +3,7 @@ import math
 
 class CuckooSearch:
     def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
-                 population_size=25, alpha=1, beta=1.5,
+                 population_size=25, alpha=0.05, beta=1.6,
                  pa=0.25, max_iter=100, error=1e-4, seed=None):
         if seed is not None:
             np.random.seed(seed)
