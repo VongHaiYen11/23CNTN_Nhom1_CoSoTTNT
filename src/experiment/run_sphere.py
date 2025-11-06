@@ -6,7 +6,7 @@ import pandas as pd
 # ==== Import các thuật toán ====
 from src.algorithms.swarm_algorithms.FA import firefly_optimize
 from src.algorithms.swarm_algorithms.ABC import abc_optimize
-from src.algorithms.swarm_algorithms.Cuckoo import cs_optimize
+from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
 from src.algorithms.swarm_algorithms.PSO import pso_optimize
 from src.algorithms.traditional_algorithms.GA import genetic_algorithm_optimize
 from src.algorithms.traditional_algorithms.HC import hill_climbing_optimize
@@ -96,15 +96,15 @@ def run_sphere():
     # ===== Cuckoo =====
     print("\n--- Đang chạy Cuckoo ---")
     start = time.time()
-    best_sol, Cuckoo_fit = cs_optimize(
-    fitness_func=sphere,
-    xmin=-5.12,
-    xmax=5.12,
-    dim=DIM,
-    population_size=POP_SIZE,
-    max_iter=5000,
-    seed=42
-    )
+    best_sol, Cuckoo_fit = CuckooSearch(
+        fitness_func=sphere,
+        lower_bound=LOWER_BOUND,
+        upper_bound=UPPER_BOUND,
+        dim=DIM,
+        population_size=200,
+        max_iter=5000,
+        seed=SEED
+    ).run()
     results["Cuckoo"] = {"Thuật toán": "Cuckoo", "Best Fitness": Cuckoo_fit, "Thời gian (s)": time.time() - start}
 
     # ===== Particle Swarm Optimization =====
