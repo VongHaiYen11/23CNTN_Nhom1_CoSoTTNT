@@ -101,8 +101,8 @@ def run_sphere():
         lower_bound=LOWER_BOUND,
         upper_bound=UPPER_BOUND,
         dim=DIM,
-        population_size=200,
-        max_iter=5000,
+        population_size=POP_SIZE,
+        max_iter=1000,
         seed=SEED
     ).run()
     results["Cuckoo"] = {"Thuật toán": "Cuckoo", "Best Fitness": Cuckoo_fit, "Thời gian (s)": time.time() - start}
