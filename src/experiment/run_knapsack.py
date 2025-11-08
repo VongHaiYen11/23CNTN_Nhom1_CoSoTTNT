@@ -6,6 +6,7 @@ import pandas as pd
 # ==== Import các thuật toán ====
 from src.algorithms.swarm_algorithms.ABC import abc_optimize
 from src.algorithms.swarm_algorithms.FA import firefly_optimize  
+from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationDiscrete
 # ==== Import bài toán ====
 from src.problem.discrete.knapsack import knapsack_fitness, generate_knapsack_problem
 
@@ -29,7 +30,8 @@ def run_knapsack():
 
     # === 2 Thiết lập thuật toán cần chạy ===
     algorithms_to_run = {
-        "ABC": abc_optimize,
+        # "ABC": abc_optimize,
+        "ACO": AntColonyOptimizationDiscrete
     }
 
     results = {}
@@ -58,21 +60,27 @@ def run_knapsack():
             )
             best_value = -best_fit  # đổi lại về giá trị dương vì ta đã đảo dấu
 
-        elif name == "FA":
-            # Nếu có phiên bản FA rời rạc (ví dụ dùng round)
-            def fitness(solution):
-                return -knapsack_fitness(np.round(solution), weights, values, capacity)
+        # ---- THÊM KHỐI "ACO" MỚI ----
+        elif name == "ACO":
+            # Class ACO_Discrete của chúng ta đã xử lý nghiệm rời rạc (0/1)
+            # Ta chỉ cần cung cấp hàm fitness (minimize)
+            def fitness(solution): # solution đã là [0, 1]
+                val = knapsack_fitness(solution, weights, values, capacity)
+                # Chuyển sang bài toán minimize (1 / value)
+                return 1.0 / (val + 1e-8)
 
-            best_sol, best_fit, hist = firefly_optimize(
-                objective_function=fitness,
-                lower_bound=0,
-                upper_bound=1,
-                dimension=N_ITEMS,
-                population_size=POP_SIZE,
-                max_iterations=MAX_ITERATIONS,
+            # Khởi tạo class (algo_func ở đây là ACO_Discrete)
+            best_sol, best_fit, hist = AntColonyOptimizationDiscrete(
+                fitness_func=fitness,
+                problem_size=N_ITEMS,
+                n_ants=POP_SIZE,
+                n_iterations=MAX_ITERATIONS,
+                alpha=1.0,
+                rho=0.5,
+                Q=1.0,
                 seed=SEED
-            )
-            best_value = -best_fit
+            ).run()
+            best_value = 1.0 / best_fit # Đảo ngược lại
 
         elapsed = time.time() - start
 

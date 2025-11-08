@@ -7,7 +7,8 @@ import pandas as pd
 from src.algorithms.swarm_algorithms.FA import firefly_optimize
 from src.algorithms.swarm_algorithms.ABC import abc_optimize
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
-from src.algorithms.swarm_algorithms.PSO import pso_optimize
+from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
+from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationContinuous
 from src.algorithms.traditional_algorithms.GA import genetic_algorithm_optimize
 from src.algorithms.traditional_algorithms.HC import hill_climbing_optimize
 from src.algorithms.traditional_algorithms.SA import simulated_annealing_optimize
@@ -110,16 +111,30 @@ def run_sphere():
     # ===== Particle Swarm Optimization =====
     print("\n--- Đang chạy PSO ---")
     start = time.time()
-    best_pos, best_val, hist = pso_optimize(
-    objective_function=sphere,
-    lower_bound=LOWER_BOUND,
-    upper_bound=UPPER_BOUND,
-    dimension=DIM,
-    population_size=POP_SIZE,
-    max_iterations=MAX_ITERATIONS,
-    seed=SEED
-    )
+    best_pos, best_val = ParticleSwarmOptimization(
+        objective_function=sphere,
+        lower_bound=LOWER_BOUND,
+        upper_bound=UPPER_BOUND,
+        dim=DIM,
+        population_size=POP_SIZE,
+        max_iter=MAX_ITERATIONS,
+        seed=SEED
+    ).run()
     results["PSO"] = {"Thuật toán": "PSO", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
+
+    # ===== Particle Swarm Optimization =====
+    print("\n--- Đang chạy ACO ---")
+    start = time.time()
+    best_pos, best_val = AntColonyOptimizationContinuous(
+        objective_function=sphere,
+        lower_bound=LOWER_BOUND,
+        upper_bound=UPPER_BOUND,
+        dim=DIM,
+        population_size=POP_SIZE,
+        max_iter=MAX_ITERATIONS,
+        seed=SEED
+    ).run()
+    results["ACO"] = {"Thuật toán": "ACO", "Best Fitness": best_val, "Thời gian (s)": time.time() - start}
 
     # ==== Hill climbing ====
     print("\n--- Đang chạy HC ---")
