@@ -31,10 +31,6 @@ class CuckooSearch:
         v = np.random.normal(0, 1, size)
         return u / (np.abs(v) ** (1 / beta))
 
-    def simple_bounds(self, x):
-        """Ensure solutions stay within bounds."""
-        return np.clip(x, self.lower_bound, self.upper_bound)
-
     def get_best_nest(self, nests, new_nests, fitness):
         """Evaluate and update nests if new ones are better."""
         new_fitness = np.array([self.fitness_func(x) for x in new_nests])
@@ -52,7 +48,7 @@ class CuckooSearch:
         perm2 = np.random.permutation(n)
         stepsize = np.random.rand() * (nests[perm1, :] - nests[perm2, :])
         new_nests = nests + stepsize * K
-        return self.simple_bounds(new_nests)
+        return np.clip(new_nests, self.lower_bound, self.upper_bound)
 
     def get_cuckoos(self, nests, best):
         """Generate new solutions via Lévy flight."""
@@ -60,8 +56,8 @@ class CuckooSearch:
         steps = self.levy_flight((n, self.dim))
         stepsize = self.alpha * steps * (nests - best)
         new_nests = nests + stepsize * np.random.randn(n, self.dim)
-        return self.simple_bounds(new_nests)
-
+        return np.clip(new_nests, self.lower_bound, self.upper_bound)
+    
     def run(self, verbose=False):
         """Main optimization loop."""
         n = self.population_size
