@@ -7,15 +7,19 @@ import pandas as pd
 
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColony
 from src.algorithms.swarm_algorithms.FA import  FireflyAlgorithm
-from src.algorithms.swarm_algorithms.PSO import pso_optimize
+from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
+from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationKnapsack
 
 # ==== Import bài toán ====
 from src.problem.discrete.knapsack import WEIGHTS, VALUES, MAX_WEIGHT, N_ITEMS
 from src.experiment.knapsack_adapter import knapsack_fitness_adapter
 
-def knapsack_fitness(x):
+def knapsack_fitness_continuos(x):
     return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=True)
+
+def knapsack_fitness_discrete(x):
+    return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=False)
 
 # Cấu hình chung
 POP_SIZE = 100
@@ -32,7 +36,7 @@ def run_knapsack():
 
     # === ABC ===
     abc = ArtificialBeeColony(
-        fitness_function=knapsack_fitness,
+        fitness_function=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
         problem_size=N_ITEMS,
         num_employed_bees=POP_SIZE//2,
@@ -49,7 +53,7 @@ def run_knapsack():
 
     # === FA ===
     fa = FireflyAlgorithm(
-        objective_function=knapsack_fitness,
+        objective_function=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
         dimension=N_ITEMS,
         population_size=POP_SIZE,
@@ -64,7 +68,7 @@ def run_knapsack():
 
     # === Cuckoo Search ===
     cs = CuckooSearch(
-        fitness_func=knapsack_fitness,
+        fitness_func=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
         dim=N_ITEMS,
         population_size=POP_SIZE,
@@ -75,5 +79,41 @@ def run_knapsack():
     bin_cs = (sol_cs > 0).astype(int)
     results['CS'] = {'value': np.sum(bin_cs * VALUES), 'weight': np.sum(bin_cs * WEIGHTS)}
 
+    # === Cuckoo Search ===
+    pso = ParticleSwarmOptimization(
+        objective_function=knapsack_fitness_continuos,
+        lower_bound=LB, upper_bound=UB,
+        dim=N_ITEMS,
+        population_size=POP_SIZE,
+        max_iter=MAX_ITER,
+        seed=SEED
+    )
+    sol_pso, fit_pso = pso.run()
+    bin_pso = (sol_pso > 0).astype(int)
+    val_pso = np.sum(bin_pso * VALUES)
+    w_pso = np.sum(bin_pso * WEIGHTS)
+    results['PSO'] = {'value': val_pso, 'weight': w_pso, 'binary': bin_pso}
+
+    # === ACO ===
+    aco = AntColonyOptimizationKnapsack (
+        fitness_function=knapsack_fitness_discrete,
+        weights=WEIGHTS,
+        values=VALUES,
+        capacity=MAX_WEIGHT,
+        n_ants=POP_SIZE,
+        max_iter=MAX_ITER,
+        alpha=1,
+        beta=2,
+        rho=0.3,
+        Q=1,
+        seed=SEED
+    )
+    sol_aco, fit_aco = aco.run()
+    bin_aco = (sol_aco > 0).astype(int)
+    val_aco = np.sum(bin_aco * VALUES)
+    w_aco = np.sum(bin_aco * WEIGHTS)
+    results['ACO'] = {'value': val_aco, 'weight': w_aco, 'binary': bin_aco}
+
 if __name__ == "__main__":
     run_knapsack()
+    print(results)
