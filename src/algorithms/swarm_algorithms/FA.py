@@ -1,126 +1,139 @@
 import numpy as np
 
-def firefly_optimize(
-    objective_function,
-    lower_bound=-5.12,
-    upper_bound=5.12,
-    dimension=30,
-    population_size=100,
-    max_iterations=200,
-    alpha=0.5,      # mức độ ngẫu nhiên
-    beta0=1.0,      # độ hấp dẫn khi khoảng cách = 0
-    gamma=0.01,      # hệ số hấp thụ ánh sáng
-    seed=None
-):
+class FireflyAlgorithm:
+    def __init__(
+        self,
+        objective_function,
+        lower_bound=-5.12,
+        upper_bound=5.12,
+        dimension=30,
+        population_size=100,
+        max_iterations=200,
+        alpha=0.5,      # Mức độ ngẫu nhiên ban đầu
+        beta0=1.0,      # Độ hấp dẫn khi khoảng cách = 0
+        gamma=0.01,     # Hệ số hấp thụ ánh sáng
+        seed=None
+        
+    ):
+        """
+        Khởi tạo class FireflyAlgorithm với các tham số cần thiết.
+        
+        :param objective_function: Hàm mục tiêu (minimization).
+        :param lower_bound: Giới hạn dưới của không gian tìm kiếm.
+        :param upper_bound: Giới hạn trên của không gian tìm kiếm.
+        :param dimension: Kích thước vấn đề (số chiều).
+        :param population_size: Số lượng đom đóm.
+        :param max_iterations: Số lượng vòng lặp tối đa.
+        :param alpha: Mức độ ngẫu nhiên ban đầu (sẽ giảm dần).
+        :param beta0: Độ hấp dẫn cơ bản.
+        :param gamma: Hệ số hấp thụ ánh sáng.
+        :param seed: Seed cho random để reproducible.
+        """
 
-    if seed is not None:
-        np.random.seed(seed)
+        self.fireflies = None
+        if seed is not None:
+            np.random.seed(seed)
 
-    # === Khởi tạo quần thể ===
-    fireflies = lower_bound + (upper_bound - lower_bound) * np.random.rand(population_size, dimension)
-    intensity = np.apply_along_axis(objective_function, 1, fireflies)
+        self.objective_function = objective_function
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.dimension = dimension
+        self.population_size = population_size
+        self.max_iterations = max_iterations
+        self.alpha = alpha
+        self.beta0 = beta0
+        self.gamma = gamma
 
-    # Lưu nghiệm tốt nhất ban đầu
-    best_idx = np.argmin(intensity)
-    best_solution = np.copy(fireflies[best_idx])
-    best_fitness = intensity[best_idx]
-    fitness_history = [best_fitness]
+    def _initialize_population(self):
+        """
+        Khởi tạo quần thể đom đóm ban đầu.
+        
+        :return: fireflies, intensity, best_solution, best_fitness, fitness_history
+        """
+        fireflies = self.lower_bound + (self.upper_bound - self.lower_bound) * np.random.rand(self.population_size, self.dimension)
+        intensity = np.apply_along_axis(self.objective_function, 1, fireflies)
 
-    # === Vòng lặp chính ===
-    for iteration in range(max_iterations):
-        alpha *= 0.97  # giảm dần mức độ ngẫu nhiên theo iteration
+        # Lưu nghiệm tốt nhất ban đầu
+        best_idx = np.argmin(intensity)
+        best_solution = np.copy(fireflies[best_idx])
+        best_fitness = intensity[best_idx]
+        fitness_history = [best_fitness]
 
-        for i in range(population_size):
-            for j in range(population_size):
+        self.fireflies = fireflies
+        return fireflies, intensity, best_solution, best_fitness, fitness_history
+
+    def _move_fireflies(self, fireflies, intensity, alpha):
+        """
+        Pha di chuyển đom đóm: Mỗi đom đóm i di chuyển về j nếu j sáng hơn (intensity thấp hơn).
+        
+        :param fireflies: Ma trận vị trí đom đóm.
+        :param intensity: Mảng độ sáng (fitness).
+        :param alpha: Mức độ ngẫu nhiên hiện tại.
+        """
+        for i in range(self.population_size):
+            for j in range(self.population_size):
                 if intensity[j] < intensity[i]:  # j sáng hơn i
                     # Tính khoảng cách bình phương
                     r2 = np.sum((fireflies[i] - fireflies[j]) ** 2)
 
                     # Tính độ hấp dẫn beta theo khoảng cách
-                    beta = beta0 * np.exp(-gamma * r2)
+                    beta = self.beta0 * np.exp(-self.gamma * r2)
 
                     # Cập nhật vị trí
-                    random_step = alpha * (np.random.uniform(-0.5, 0.5, dimension)) * (upper_bound - lower_bound)
+                    random_step = alpha * (np.random.uniform(-0.5, 0.5, self.dimension)) * (self.upper_bound - self.lower_bound)
                     fireflies[i] += beta * (fireflies[j] - fireflies[i]) + random_step
 
                     # Giữ trong biên
-                    fireflies[i] = np.clip(fireflies[i], lower_bound, upper_bound)
+                    fireflies[i] = np.clip(fireflies[i], self.lower_bound, self.upper_bound)
 
                     # Cập nhật độ sáng mới
-                    intensity[i] = objective_function(fireflies[i])
+                    intensity[i] = self.objective_function(fireflies[i])
 
-        # Cập nhật nghiệm tốt nhất toàn cục
-        best_idx = np.argmin(intensity)
-        best_solution = np.copy(fireflies[best_idx])
-        best_fitness = intensity[best_idx]
+    def _update_best_solution(self, fireflies, intensity, best_solution, best_fitness, fitness_history):
+        """
+        Cập nhật nghiệm tốt nhất toàn cục.
+        
+        :param fireflies: Ma trận vị trí đom đóm.
+        :param intensity: Mảng độ sáng (fitness).
+        :param best_solution: Nghiệm tốt nhất hiện tại.
+        :param best_fitness: Fitness tốt nhất hiện tại.
+        :param fitness_history: Lịch sử fitness.
+        :return: best_solution, best_fitness, fitness_history (cập nhật)
+        """
+        current_best_idx = np.argmin(intensity)
+        current_best_fitness = intensity[current_best_idx]
+
+        if current_best_fitness < best_fitness:
+            best_fitness = current_best_fitness
+            best_solution = np.copy(fireflies[current_best_idx])
+
         fitness_history.append(best_fitness)
+        return best_solution, best_fitness, fitness_history
 
-        # if (iteration + 1) % 10 == 0 or iteration == 0:
-        #     print(f"Iteration {iteration+1}/{max_iterations}, Best Fitness = {best_fitness:.6f}")
+    def run(self):
+        """
+        Chạy thuật toán FA chính: Khởi tạo và lặp qua các pha di chuyển.
+        
+        :return: best_solution, best_fitness, fitness_history
+        """
+        fireflies, intensity, best_solution, best_fitness, fitness_history = self._initialize_population()
+        alpha = self.alpha  # Sao chép để giảm dần mà không thay đổi init
 
-    # === Trả kết quả ===
-    print("\n--- Optimization Results (FA) ---")
-    print(f"Best Fitness: {best_fitness}")
-    print(f"Best Solution: {best_solution}")
+        for iteration in range(self.max_iterations):
+            alpha *= 0.97  # Giảm dần mức độ ngẫu nhiên theo iteration
 
-    return best_solution, best_fitness, fitness_history
+            self._move_fireflies(fireflies, intensity, alpha)
 
-# import numpy as np
+            best_solution, best_fitness, fitness_history = self._update_best_solution(
+                fireflies, intensity, best_solution, best_fitness, fitness_history
+            )
 
-# def firefly_optimize(
-#     objective_function,
-#     lower_bound=-5.12,
-#     upper_bound=5.12,
-#     dimension=30,
-#     population_size=50,
-#     max_iterations=100,
-#     alpha=1.0,   # attractiveness at r = 0
-#     beta=0.05,   # randomization
-#     gamma=1,   # light absorption coefficient
-#     seed=None
-# ):
+            # if (iteration + 1) % 10 == 0 or iteration == 0:
+            #     print(f"Iteration {iteration+1}/{self.max_iterations}, Best Fitness = {best_fitness:.6f}")
 
-#     if seed is not None:
-#         np.random.seed(seed)
+        self.fireflies = fireflies
+        print("\n--- Optimization Results (FA) ---")
+        print(f"Best Fitness: {best_fitness}")
+        print(f"Best Solution: {best_solution}")
 
-#     # === 1. Khởi tạo quần thể === #
-#     population = lower_bound + (upper_bound - lower_bound) * np.random.rand(population_size, dimension)
-#     fitness = np.apply_along_axis(objective_function, 1, population)
-
-#     # Ghi nhận con sáng nhất ban đầu
-#     best_idx = np.argmin(fitness)
-#     best_solution = np.copy(population[best_idx])
-#     best_fitness = fitness[best_idx]
-#     fitness_history = [best_fitness]
-
-#     # === 2. Vòng lặp chính === #
-#     for iteration in range(max_iterations):
-
-#         for i in range(population_size):
-#             for j in range(population_size):
-#                 if fitness[j] < fitness[i]:
-#                   distance = np.linalg.norm(population[i] - population[j])
-#                   attractiveness = np.exp(-gamma * distance**2)
-#                   population[i] += beta * attractiveness * (population[j] - population[i]) + alpha * (np.random.rand(dimension) - 0.5)
-
-#             # Giữ trong phạm vi giới hạn
-#             population[i] = np.maximum(lower_bound, population[i])
-#             population[i] = np.minimum(upper_bound, population[i])
-
-#         # Tính lại độ sáng (fitness)
-#         fitness = np.apply_along_axis(objective_function, 1, population)
-
-#         # Cập nhật nghiệm tốt nhất
-#         best_index = np.argmin(fitness)
-#         best_solution = population[best_index]
-#         best_fitness = fitness[best_index]
-
-#         fitness_history.append(best_fitness)
-#         print(f"Iteration {iteration+1}/{max_iterations}, Best Fitness: {best_fitness:.6f}")
-
-#     # === 3. Trả kết quả === #
-#     print("\n--- Optimization Results ---")
-#     print(f"Best Fitness: {best_fitness}")
-#     print(f"Best Solution: {best_solution}")
-
-#     return best_solution, best_fitness, fitness_history
+        return best_solution, best_fitness, fitness_history
