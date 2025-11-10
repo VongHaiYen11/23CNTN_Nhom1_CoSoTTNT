@@ -1,67 +1,50 @@
 import numpy as np
 
-def hill_climbing_optimize(fitness_func, x_min, x_max, dimension, max_iteration=100,
-                           n_neighbors=1000, error=1e-4, seed=None, verbose=False):
-    """
-    Thực hiện thuật toán Hill Climbing (tối ưu cục bộ) cho bài toán tối ưu hóa liên tục.
-
-    Mô tả ngắn:
-      Hàm này tìm nghiệm tối ưu bằng cách:
-      - Khởi tạo một nghiệm ngẫu nhiên
-      - Sinh một số neighbors quanh nghiệm hiện tại
-      - Chọn neighbor tốt nhất để cập nhật
-      - Lặp lại quá trình cho đến khi đạt ngưỡng lỗi hoặc không cải thiện liên tiếp
-      - Sử dụng clipping để đảm bảo nghiệm nằm trong khoảng [x_min, x_max]
-
-    Tham số:
-      fitness_func (callable): hàm nhận một nghiệm (mảng 1D, kích thước = dimension) trả về giá trị fitness (minimization)
-      x_min, x_max (float hoặc array_like): biên dưới và biên trên cho các biến
-      dimension (int): số chiều của nghiệm
-      max_iteration (int, tùy chọn): số vòng lặp tối đa (mặc định 100)
-      n_neighbors (int, tùy chọn): số neighbor được sinh ra mỗi vòng lặp (mặc định 20)
-      error (float, tùy chọn): ngưỡng dừng theo giá trị fitness (mặc định 1e-4)
-      max_no_improve (int, tùy chọn): số vòng liên tiếp không cải thiện trước khi dừng (mặc định 10)
-      seed (int, tùy chọn): seed cho random, để tái lập kết quả (mặc định None)
-      verbose (bool, tùy chọn): nếu True in thông tin tiến trình (mặc định True)
-
-    Trả về:
-      best_solution (np.ndarray): nghiệm tốt nhất tìm được (mảng kích thước = dimension)
-      best_fitness (float): giá trị fitness tương ứng của best_solution
-    """
+class HillClimbing:
+  def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
+               max_iter=100, n_neighbors=1000, tolerance=1e-4,
+               seed=None, verbose=False):
     if seed is not None:
-        np.random.seed(seed)
+      np.random.seed(seed)
 
-    x_min = np.array(x_min)
-    x_max = np.array(x_max)
-    current_solution = np.random.uniform(x_min, x_max, size=dimension)
-    current_fitness = fitness_func(current_solution)
+    self.fitness_func = fitness_func
+    self.lower_bound = np.array(lower_bound)
+    self.upper_bound = np.array(upper_bound)
+    self.dim = dim
+    self.max_iter = max_iter
+    self.n_neighbors = n_neighbors
+    self.tolerance = tolerance
+    self.verbose = verbose
 
-    for iteration in range(max_iteration):
-        # Sinh neighbors quanh nghiệm hiện tại
-        step = (x_max - x_min) * 0.1
-        neighbors = []
-        for _ in range(n_neighbors):
-            perturbation = np.random.uniform(-step, step, size=dimension)
-            neighbor = np.clip(current_solution + perturbation, x_min, x_max)
-            neighbors.append(neighbor)
-        neighbors = np.array(neighbors)
+    # Khởi tạo nghiệm ban đầu
+    self.current_solution = np.zeros(self.dim)
+    self.current_fitness = self.fitness_func(self.current_solution)
 
-        # Tính fitness và sắp xếp neighbors theo giá trị fitness
-        fitness_values = np.array([fitness_func(n) for n in neighbors])
-        idx = np.argsort(fitness_values)
-        neighbors = neighbors[idx]
+  def run(self):
+    step = (self.upper_bound - self.lower_bound) * 0.1
 
-        # Cập nhật nghiệm tốt nhất nếu có cải thiện
-        if fitness_func(neighbors[0]) < current_fitness:
-            current_solution = neighbors[0]
-            current_fitness = fitness_func(neighbors[0])
-        else:
-            break
+    for iteration in range(self.max_iter):
+      # Sinh tất cả neighbor (vector hóa)
+      perturbations = np.random.uniform(-step, step, size=(self.n_neighbors, self.dim))
+      neighbors = np.clip(self.current_solution + perturbations, self.lower_bound, self.upper_bound)
 
-        if verbose:
-            print(f"Iteration {iteration + 1}: best fitness = {current_fitness:.6f}")
+      # Đánh giá toàn bộ neighbor
+      fitness_values = np.apply_along_axis(self.fitness_func, 1, neighbors)
+      best_idx = np.argmin(fitness_values)
+      best_neighbor = neighbors[best_idx]
+      best_neighbor_fitness = fitness_values[best_idx]
 
-        if current_fitness < error:
-            break
+      # Cập nhật nếu có cải thiện
+      if best_neighbor_fitness < self.current_fitness:
+        print("Cap nhat", iteration)
+        self.current_solution = best_neighbor
+        self.current_fitness = best_neighbor_fitness
+      else:
+        print("Dung cap nhat", iteration)
+        print(self.current_solution, self.current_fitness)
+        break  # Không cải thiện → hội tụ
 
-    return current_solution, current_fitness
+      if self.verbose:
+        print(f"Iteration {iteration + 1}: best fitness = {self.current_fitness:.6f} \n, best_solution = {self.current_solution}")
+
+    return self.current_solution, self.current_fitness

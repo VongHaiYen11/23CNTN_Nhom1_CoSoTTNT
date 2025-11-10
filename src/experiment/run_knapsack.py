@@ -10,16 +10,13 @@ from src.algorithms.swarm_algorithms.FA import  FireflyAlgorithm
 from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
 from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationKnapsack
+from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmContinuos
+from src.algorithms.traditional_algorithms.HC import HillClimbing
+from src.algorithms.traditional_algorithms.SA import SimulatedAnnealing
 
 # ==== Import bài toán ====
 from src.problem.discrete.knapsack import WEIGHTS, VALUES, MAX_WEIGHT, N_ITEMS
 from src.experiment.knapsack_adapter import knapsack_fitness_adapter
-
-def knapsack_fitness_continuos(x):
-    return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=True)
-
-def knapsack_fitness_discrete(x):
-    return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=False)
 
 # Cấu hình chung
 POP_SIZE = 100
@@ -28,6 +25,32 @@ SEED = 42
 LB, UB = -10, 10
 
 results = {}
+
+def knapsack_fitness_continuos(x):
+    return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=False, seed=SEED)
+
+def knapsack_fitness_discrete(x):
+    return knapsack_fitness_adapter(x, WEIGHTS, VALUES, MAX_WEIGHT, use_sigmoid=False, seed=SEED)
+
+def print_results(results_dict):
+    """
+    In kết quả cuối cùng của các thuật toán cho Knapsack problem
+    """
+    rows = []
+    for algo_name, res in results_dict.items():
+        row = {
+            'Algorithm': algo_name,
+            'Value': res['value'],
+            'Weight': res['weight'],
+            'Solution': ''.join(map(str, res['binary']))  # hiển thị nghiệm 0/1
+        }
+        rows.append(row)
+    
+    df = pd.DataFrame(rows)
+    df = df.sort_values(by='Value', ascending=False).reset_index(drop=True)
+    
+    print("\n=== Knapsack Optimization Results ===")
+    print(df.to_string(index=False))
 
 
 def run_knapsack():
@@ -73,13 +96,15 @@ def run_knapsack():
         dim=N_ITEMS,
         population_size=POP_SIZE,
         max_iter=MAX_ITER,
-        seed=SEED
+        seed=SEED,
+        verbose=True
     )
     sol_cs, fit_cs = cs.run()
+    print(sol_cs)
     bin_cs = (sol_cs > 0).astype(int)
-    results['CS'] = {'value': np.sum(bin_cs * VALUES), 'weight': np.sum(bin_cs * WEIGHTS)}
+    results['CS'] = {'value': np.sum(bin_cs * VALUES), 'weight': np.sum(bin_cs * WEIGHTS), 'binary': bin_cs}
 
-    # === Cuckoo Search ===
+    # === PSO ===
     pso = ParticleSwarmOptimization(
         objective_function=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
@@ -114,6 +139,45 @@ def run_knapsack():
     w_aco = np.sum(bin_aco * WEIGHTS)
     results['ACO'] = {'value': val_aco, 'weight': w_aco, 'binary': bin_aco}
 
+    # === Hill Climbing ===
+    print("--- Hill Climbing ---")
+    hc = HillClimbing(
+        fitness_func=knapsack_fitness_continuos,
+        lower_bound=LB,
+        upper_bound=UB,
+        dim=N_ITEMS,
+        max_iter=MAX_ITER,
+        n_neighbors=POP_SIZE,  # số neighbors = pop size
+        tolerance=1e-4,
+        seed=SEED,
+        verbose=False
+    )
+    sol_hc, fit_hc = hc.run()
+    bin_hc = (sol_hc > 0).astype(int)
+    val_hc = np.sum(bin_hc * VALUES)
+    w_hc = np.sum(bin_hc * WEIGHTS)
+    results['HC'] = {'value': val_hc, 'weight': w_hc, 'binary': bin_hc}
+
+    # === Simulated Annealing ===
+    print("--- Simulated Annealing ---")
+    sa = SimulatedAnnealing(
+        fitness_func=knapsack_fitness_continuos,
+        lower_bound=LB,
+        upper_bound=UB,
+        dim=N_ITEMS,
+        max_iter=MAX_ITER * 2,  # SA thường cần nhiều iter hơn
+        step_size=0.5,
+        initial_temp=100,
+        seed=SEED,
+        verbose=True
+    )
+    sol_sa, fit_sa = sa.run()
+    bin_sa = (sol_sa > 0).astype(int)
+    val_sa = np.sum(bin_sa * VALUES)
+    w_sa = np.sum(bin_sa * WEIGHTS)
+    results['SA'] = {'value': val_sa, 'weight': w_sa, 'binary': bin_sa}
+
+
 if __name__ == "__main__":
     run_knapsack()
-    print(results)
+    print_results(results)

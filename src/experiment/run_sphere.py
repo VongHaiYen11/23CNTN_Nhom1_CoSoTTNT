@@ -12,11 +12,11 @@ import random  # Để generate random seeds cho robustness
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
 from src.algorithms.swarm_algorithms.FA import FireflyAlgorithm  
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColony 
-from src.algorithms.swarm_algorithms.PSO import pso_optimize
+from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
 
-from src.algorithms.traditional_algorithms.GA import genetic_algorithm_optimize
-from src.algorithms.traditional_algorithms.HC import hill_climbing_optimize
-from src.algorithms.traditional_algorithms.SA import simulated_annealing_optimize
+from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmContinuos
+from src.algorithms.traditional_algorithms.HC import HillClimbing
+from src.algorithms.traditional_algorithms.SA import SimulatedAnnealing
 
 # ==== Import bài toán ====
 from src.problem.continuous.sphere import sphere  # Fitness func: min=0 at x=0
@@ -103,27 +103,56 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
         population = None
     
     elif algo_name == 'PSO':
-        best_sol, best_fit, hist = pso_optimize(objective_function=sphere, lower_bound=LOWER_BOUND, upper_bound=UPPER_BOUND,
-                                                dimension=dim, population_size=pop_size, max_iterations=MAX_ITERATIONS, seed=seed)
+        best_sol, best_fit = ParticleSwarmOptimization(
+            objective_function=sphere,
+            lower_bound=LOWER_BOUND,
+            upper_bound=UPPER_BOUND,
+            dim=dim,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed
+        ).run()
+        
+        hist = [best_fit] * MAX_ITERATIONS  # placeholder, vì class chưa trả history
         population = None  # PSO có particles, add nếu implement
-    
+
     elif algo_name == 'HC':
-        best_sol, best_fit = hill_climbing_optimize(fitness_func=sphere, x_min=LOWER_BOUND, x_max=UPPER_BOUND,
-                                                    dimension=dim, max_iteration=MAX_ITERATIONS, seed=seed)
+        best_sol, best_fit = HillClimbing(
+            fitness_func=sphere,
+            lower_bound=LOWER_BOUND,
+            upper_bound=UPPER_BOUND,
+            dim=dim,
+            max_iter=MAX_ITERATIONS,
+            seed=seed
+        ).run()
         hist = [best_fit] * MAX_ITERATIONS  # No hist, placeholder
         population = None
-    
+
     elif algo_name == 'GA':
-        best_sol, best_fit = genetic_algorithm_optimize(fitness_func=sphere, x_min=LOWER_BOUND, x_max=UPPER_BOUND,
-                                                        dimension=dim, npopulation=pop_size, max_iteration=MAX_ITERATIONS, seed=seed)
+        best_sol, best_fit = GeneticAlgorithmContinuos(
+            fitness_func=sphere,
+            lower_bound=LOWER_BOUND,
+            upper_bound=UPPER_BOUND,
+            dim=dim,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed
+        ).run()
         hist = [best_fit] * MAX_ITERATIONS
         population = None
-    
+
     elif algo_name == 'SA':
-        best_sol, best_fit = simulated_annealing_optimize(fitness_func=sphere, x_min=LOWER_BOUND, x_max=UPPER_BOUND,
-                                                          dimension=dim, max_iteration=MAX_ITERATIONS * 100, seed=seed)  # SA cần nhiều iter
+        best_sol, best_fit = SimulatedAnnealing(
+            fitness_func=sphere,
+            lower_bound=LOWER_BOUND,
+            upper_bound=UPPER_BOUND,
+            dim=dim,
+            max_iter=MAX_ITERATIONS * 100,  # SA cần nhiều iter
+            seed=seed
+        ).run()
         hist = [best_fit] * MAX_ITERATIONS
         population = None
+
     
     elapsed = time.time() - start_time
     space = measure_space_usage(population) if population is not None else measure_space_usage(best_sol)
@@ -204,7 +233,6 @@ def run_experiments():
     
     
     print("\nAll experiments done! Use CSVs/plots for report tables/charts.")
->>>>>>> Stashed changes
 
 if __name__ == "__main__":
     run_experiments()

@@ -4,7 +4,7 @@ import math
 class CuckooSearch:
     def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
                  population_size=25, pa=0.25, alpha=0.01, beta=1.5,
-                 max_iter=1000, tolerance=1e-4, seed=None):
+                 max_iter=1000, seed=None, verbose=False):
         """
         Improved Cuckoo Search (Yang & Deb, 2009) - Vectorized version
         """
@@ -20,7 +20,7 @@ class CuckooSearch:
         self.alpha = alpha
         self.beta = beta
         self.max_iter = max_iter
-        self.tolerance = tolerance
+        self.verbose = verbose
 
     def levy_flight(self, size):
         """Generate Lévy flight step using Mantegna’s algorithm."""
@@ -58,8 +58,9 @@ class CuckooSearch:
         new_nests = nests + stepsize * np.random.randn(n, self.dim)
         return np.clip(new_nests, self.lower_bound, self.upper_bound)
     
-    def run(self, verbose=False):
+    def run(self):
         """Main optimization loop."""
+        print("\n--- Cuckoo Search ---")
         n = self.population_size
         nests = np.random.uniform(self.lower_bound, self.upper_bound, (n, self.dim))
         fitness = np.array([self.fitness_func(x) for x in nests])
@@ -68,7 +69,7 @@ class CuckooSearch:
         best = nests[best_idx].copy()
         fmin = fitness[best_idx]
         t = 0
-        while t < self.max_iter and fmin > self.tolerance:
+        while t < self.max_iter:
             # Lévy flight phase
             new_nests = self.get_cuckoos(nests, best)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
@@ -77,7 +78,7 @@ class CuckooSearch:
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
 
-            if verbose and (t % 50 == 0 or t == self.max_iter - 1):
+            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
                 print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
 
             t += 1

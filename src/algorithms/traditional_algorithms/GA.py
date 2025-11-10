@@ -1,97 +1,63 @@
 import numpy as np
 
-def genetic_algorithm_optimize(fitness_func, max_iteration, x_min, x_max, dimension, alpha=0.9,
-                               error=1e-4, npopulation=20, elitism=2, sigma=0.1,
-                               verbose=False, seed=None):
-    """
-    Thuật toán di truyền (Genetic Algorithm) cho tối ưu hóa liên tục.
-
-    Tham số:
-      fitness_func: hàm fitness (càng nhỏ càng tốt)
-      max_iteration: số vòng lặp tối đa
-      x_min, x_max: biên dưới và trên
-      dimension: số chiều
-      alpha: trọng số lai
-      error: ngưỡng dừng fitness
-      npopulation: số cá thể trong quần thể
-      elitism: số cá thể tốt nhất giữ nguyên
-      sigma: độ lệch chuẩn đột biến Gaussian
-      verbose: in tiến trình nếu True
-      seed: số seed cho random (None nếu không cố định)
-
-    Trả về:
-      best_individual: nghiệm tốt nhất
-      best_fitness: giá trị fitness tương ứng
-    """
+class GeneticAlgorithmContinuos:
+  def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
+               population_size=25, alpha=0.01, max_iter=1000,
+               tolerance=1e-4, elitism=2, sigma=0.1, seed=None):
     if seed is not None:
-        np.random.seed(seed)
+      np.random.seed(seed)
 
-    # --- Khởi tạo population ---
-    population = np.random.uniform(x_min, x_max, (npopulation, dimension))
+    self.fitness_func = fitness_func
+    self.lower_bound = lower_bound
+    self.upper_bound = upper_bound
+    self.dim = dim
+    self.population_size = population_size
+    self.alpha = alpha
+    self.max_iter = max_iter
+    self.tolerance = tolerance
+    self.elitism = elitism
+    self.sigma = sigma
+    self.population = np.random.uniform(lower_bound, upper_bound,
+                                        (population_size, dim))
 
-    def sort_population(pop):
-        fitness_values = np.array([fitness_func(ind) for ind in pop])
-        idx = np.argsort(fitness_values)
-        return pop[idx]
+  def evaluate_population(self):
+    return np.array([self.fitness_func(ind) for ind in self.population])
 
-    def elitism_selection(pop):
-        pop_sorted = sort_population(pop)
-        return pop_sorted[:elitism].copy()
+  def run(self):
+    for i in range(self.max_iter):
+      fitness_values = self.evaluate_population()
+      sorted_idx = np.argsort(fitness_values)
+      self.population = self.population[sorted_idx]
+      best_fitness = fitness_values[sorted_idx[0]]
 
-    def selection(pop, n_select):
-        selection_pool = []
-        for _ in range(n_select):
-            idx1, idx2 = np.random.randint(0, len(pop), 2)
-            if fitness_func(pop[idx1]) < fitness_func(pop[idx2]):
-                selection_pool.append(pop[idx1])
-            else:
-                selection_pool.append(pop[idx2])
-        return np.unique(selection_pool, axis=0)
+      print(f"Iteration {i + 1}: best fitness = {best_fitness:.6f}")
+      if best_fitness < self.tolerance:
+        break
 
-    def crossover(selected, n_crossover):
-        crossover_pool = []
-        for _ in range(n_crossover):
-            dad = selected[np.random.randint(0, len(selected))]
-            mom = selected[np.random.randint(0, len(selected))]
-            offspring = alpha * dad + (1 - alpha) * mom
-            crossover_pool.append(offspring)
-        return np.unique(crossover_pool, axis=0)
+      # ---- Elitism ----
+      elites = self.population[:self.elitism]
 
-    def mutation(selected, n_mutation):
-        mutation_pool = []
-        for _ in range(n_mutation):
-            parent = selected[np.random.randint(0, len(selected))]
-            offspring = np.clip(parent + sigma * np.random.randn(dimension), x_min, x_max)
-            mutation_pool.append(offspring)
-        return np.unique(mutation_pool, axis=0)
+      # ---- Selection (tournament 2-way, vectorized) ----
+      idx1 = np.random.randint(0, self.population_size, self.population_size)
+      idx2 = np.random.randint(0, self.population_size, self.population_size)
+      better = fitness_values[idx1] < fitness_values[idx2]
+      selected = np.where(better[:, None], self.population[idx1], self.population[idx2])
 
-    # --- Vòng lặp chính ---
-    for i in range(max_iteration):
-        elites = elitism_selection(population)
-        new_population = elites.copy()
+      # ---- Crossover ----
+      n_crossover = int(self.population_size * 0.4)
+      parents_idx = np.random.randint(0, len(selected), (n_crossover, 2))
+      dads = selected[parents_idx[:, 0]]
+      moms = selected[parents_idx[:, 1]]
+      crossed = self.alpha * dads + (1 - self.alpha) * moms
 
-        while len(new_population) < npopulation:
-            remain = npopulation - len(new_population)
-            n_selection = max(int(remain * 0.4), 2)
-            n_crossover = max(int(remain * 0.4), 1)
-            n_mutation = max(remain - n_selection - n_crossover, 1)
+      # ---- Mutation ----
+      n_mutation = self.population_size - len(elites) - len(crossed)
+      parents = selected[np.random.randint(0, len(selected), n_mutation)]
+      mutations = self.sigma * np.random.randn(n_mutation, self.dim)
+      mutated = np.clip(parents + mutations, self.lower_bound, self.upper_bound)
 
-            selected = selection(population, n_selection)
-            crossed = crossover(selected, n_crossover)
-            mutated = mutation(selected, n_mutation)
+      # ---- New population ----
+      self.population = np.vstack((elites, crossed, mutated))
 
-            combined = np.concatenate((selected, crossed, mutated), axis=0)
-            new_population = np.unique(np.concatenate((new_population, combined), axis=0), axis=0)
-
-        population = new_population[:npopulation]
-        population = sort_population(population)
-
-        best_fit = fitness_func(population[0])
-        if verbose:
-            print(f"Iteration {i + 1}: best fitness = {best_fit:.6f}")
-        if best_fit < error:
-            break
-
-    best_individual = population[0]
-    best_fitness = fitness_func(best_individual)
-    return best_individual, best_fitness
+    best_solution = self.population[0]
+    return best_solution, self.fitness_func(best_solution)
