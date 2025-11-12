@@ -113,7 +113,7 @@ def run_knapsack():
         seed=SEED,
         verbose=True
     )
-    sol_cs, fit_cs = cs.run()
+    sol_cs= cs.run()
     print(sol_cs)
     end = time.time()
     results['CS'] = {
@@ -181,7 +181,7 @@ def run_knapsack():
         seed=SEED,
         verbose=False
     )
-    sol_hc, fit_hc = hc.run()
+    sol_hc = hc.run()
     end = time.time()
     results['HC'] = {
         'value': np.sum(sol_hc * VALUES),
@@ -204,12 +204,34 @@ def run_knapsack():
         seed=SEED,
         verbose=True
     )
-    sol_sa, fit_sa = sa.run()
+    sol_sa = sa.run()
     end = time.time()
     results['SA'] = {
         'value': np.sum(sol_sa * VALUES),
         'weight': np.sum(sol_sa * WEIGHTS),
         'binary': sol_sa,
+        'time': end - start
+    }
+
+    # ==== Run Genetic Algorithm ====
+    print("--- Genetic Algorithm ---")
+    start = time.time()
+    ga = GeneticAlgorithmKnapsack(
+        weights=WEIGHTS,
+        values=VALUES,
+        capacity=MAX_WEIGHT,
+        population_size=POP_SIZE,
+        max_iter=MAX_ITER,
+        seed=SEED,
+        verbose=False
+    )
+    best_solution = ga.run()
+    end = time.time()
+
+    results['GA'] = {
+        'value': np.sum(best_solution * VALUES),
+        'weight': np.sum(best_solution * WEIGHTS),
+        'binary': best_solution,
         'time': end - start
     }
 

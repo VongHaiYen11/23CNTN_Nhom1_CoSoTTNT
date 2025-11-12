@@ -111,4 +111,4 @@ class SimulatedAnnealingKnapsack:
             if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter):
                 print(f"Iteration {iteration}: best fitness = {best_fitness:.6f}")
 
-        return best_solution, best_fitness
+        return best_solution

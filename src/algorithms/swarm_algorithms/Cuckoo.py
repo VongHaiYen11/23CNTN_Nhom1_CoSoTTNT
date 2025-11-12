@@ -200,7 +200,7 @@ class CuckooSearchKnapsack:
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
 
-        return best, fmax
+        return best
 
 if __name__ == "__main__":
     # Ví dụ nhỏ Knapsack

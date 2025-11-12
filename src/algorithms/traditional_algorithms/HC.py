@@ -110,4 +110,4 @@ class HillClimbingKnapsack:
             if self.verbose:
                 print(f"Iteration {iteration}: best fitness = {best_fitness:.6f}")
 
-        return best_solution, best_fitness
+        return best_solution

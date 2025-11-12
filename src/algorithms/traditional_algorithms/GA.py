@@ -184,4 +184,4 @@ class GeneticAlgorithmKnapsack:
       if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
         print(f"Iteration {t+1}/{self.max_iter}: best fitness = {best_fitness:.2f}")
 
-    return best_solution, best_fitness
+    return best_solution
