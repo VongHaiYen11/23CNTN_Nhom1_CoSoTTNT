@@ -5,8 +5,8 @@ import pandas as pd
 
 # ==== Import các thuật toán ====
 
-from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColony
-from src.algorithms.swarm_algorithms.FA import  FireflyAlgorithm
+from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColonyKnapsack
+from src.algorithms.swarm_algorithms.FA import  FireflyKnapsack
 from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearchKnapsack
 from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationKnapsack
@@ -60,7 +60,7 @@ def run_knapsack():
 
     # === ABC ===
     start = time.time()
-    abc = ArtificialBeeColony(
+    abc = ArtificialBeeColonyKnapsack(
         fitness_function=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
         problem_size=N_ITEMS,
@@ -82,7 +82,7 @@ def run_knapsack():
 
     # === FA ===
     start = time.time()
-    fa = FireflyAlgorithm(
+    fa = FireflyKnapsack(
         objective_function=knapsack_fitness_continuos,
         lower_bound=LB, upper_bound=UB,
         dimension=N_ITEMS,
