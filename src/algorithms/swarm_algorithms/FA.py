@@ -137,3 +137,176 @@ class FireflyAlgorithm:
         print(f"Best Solution: {best_solution}")
 
         return best_solution, best_fitness, fitness_history
+    
+#########################################
+# Firefly Algorithm cho Knapsack Problem
+#########################################
+
+class FireflyKnapsack:
+    def __init__(
+        self,
+        weights,
+        values,
+        max_weight,
+        population_size=100,
+        max_iterations=200,
+        alpha=0.2,      # Xác suất mutation
+        beta0=1.0,      # Độ hấp dẫn cơ bản
+        gamma=0.01,     # Hệ số giảm độ hấp dẫn theo khoảng cách Hamming
+        seed=None
+    ):
+        """
+        Firefly Algorithm cho 0/1 Knapsack (discrete).
+        
+        :param weights: List/array trọng lượng các item
+        :param values: List/array giá trị các item
+        :param max_weight: Trọng lượng tối đa của ba lô
+        :param population_size: Số đom đóm
+        :param max_iterations: Số vòng lặp
+        :param alpha: Tỷ lệ mutation
+        :param beta0: Độ hấp dẫn cơ bản
+        :param gamma: Hệ số hấp thụ (dựa trên khoảng cách Hamming)
+        :param seed: Reproducibility
+        """
+        self.weights = np.array(weights)
+        self.values = np.array(values)
+        self.max_weight = max_weight
+        self.n_items = len(weights)
+        self.population_size = population_size
+        self.max_iterations = max_iterations
+        self.alpha = alpha
+        self.beta0 = beta0
+        self.gamma = gamma
+        
+        self.fireflies = None  # binary solutions
+        self.fitness = None    # tổng giá trị (maximize)
+        
+        if seed is not None:
+            np.random.seed(seed)
+
+    def _initialize_population(self):
+        """
+        Khởi tạo ngẫu nhiên các giải pháp binary (0/1)
+        """
+        fireflies = np.random.randint(0, 2, size=(self.population_size, self.n_items))
+        fitness = np.array([self._evaluate(sol) for sol in fireflies])
+        
+        best_idx = np.argmax(fitness)
+        best_solution = fireflies[best_idx].copy()
+        best_fitness = fitness[best_idx]
+        fitness_history = [best_fitness]
+        
+        self.fireflies = fireflies
+        self.fitness = fitness
+        
+        return fireflies, fitness, best_solution, best_fitness, fitness_history
+
+    def _evaluate(self, solution):
+        """
+        Đánh giá fitness: tổng giá trị, phạt nếu vượt trọng lượng
+        """
+        total_value = np.sum(solution * self.values)
+        total_weight = np.sum(solution * self.weights)
+        
+        if total_weight > self.max_weight:
+            return 0  # phạt nặng: không hợp lệ
+        return total_value  # maximize
+
+    def _hamming_distance(self, x, y):
+        """Khoảng cách Hamming giữa 2 binary vector"""
+        return np.sum(x != y)
+
+    def _crossover(self, parent1, parent2):
+        """One-point crossover"""
+        if np.random.rand() < 0.8:  # 80% chance crossover
+            point = np.random.randint(1, self.n_items)
+            child = np.concatenate([parent1[:point], parent2[point:]])
+        else:
+            child = parent1.copy()
+        return child
+
+    def _mutate(self, solution):
+        """Bit-flip mutation"""
+        for i in range(self.n_items):
+            if np.random.rand() < self.alpha:
+                solution[i] = 1 - solution[i]  # flip 0 ↔ 1
+        return solution
+
+    def _repair(self, solution):
+        """
+        Sửa giải pháp nếu vượt trọng lượng (greedy drop)
+        """
+        total_weight = np.sum(solution * self.weights)
+        if total_weight <= self.max_weight:
+            return solution
+        
+        # Xóa item có value/weight thấp nhất
+        ratios = self.values / (self.weights + 1e-8)
+        item_ranks = np.argsort(ratios)
+        sol = solution.copy()
+        for idx in item_ranks:
+            if sol[idx] == 1:
+                sol[idx] = 0
+                total_weight -= self.weights[idx]
+                if total_weight <= self.max_weight:
+                    break
+        return sol
+
+    def _move_firefly(self, i, j):
+        """
+        Đom đóm i di chuyển về j (nếu j tốt hơn)
+        """
+        if self.fitness[j] <= self.fitness[i]:
+            return  # không di chuyển
+        
+        # Tính độ hấp dẫn dựa trên Hamming distance
+        r = self._hamming_distance(self.fireflies[i], self.fireflies[j])
+        beta = self.beta0 * np.exp(-self.gamma * r)
+        
+        if np.random.rand() < beta:
+            # Crossover + Mutation
+            child = self._crossover(self.fireflies[i], self.fireflies[j])
+            child = self._mutate(child)
+            child = self._repair(child)
+            
+            # Cập nhật nếu tốt hơn
+            child_fitness = self._evaluate(child)
+            if child_fitness > self.fitness[i]:
+                self.fireflies[i] = child
+                self.fitness[i] = child_fitness
+
+    def run(self):
+        """
+        Chạy FA cho Knapsack
+        """
+        fireflies, fitness, best_solution, best_fitness, fitness_history = self._initialize_population()
+        alpha = self.alpha
+        
+        for iteration in range(self.max_iterations):
+            alpha *= 0.97  # giảm dần mutation
+            
+            # Mỗi đom đóm xem tất cả các đom đóm khác
+            for i in range(self.population_size):
+                for j in range(self.population_size):
+                    if i != j:
+                        self._move_firefly(i, j)
+            
+            # Cập nhật best
+            current_best_idx = np.argmax(fitness)
+            if fitness[current_best_idx] > best_fitness:
+                best_fitness = fitness[current_best_idx]
+                best_solution = fireflies[current_best_idx].copy()
+            
+            fitness_history.append(best_fitness)
+            
+            # if (iteration + 1) % 50 == 0:
+            #     print(f"Iter {iteration+1}, Best Value: {best_fitness}")
+
+        print("\n--- Optimization Results (Firefly Knapsack) ---")
+        total_value = int(best_fitness)
+        total_weight = np.sum(best_solution * self.weights)
+        print(f"Best Value: {total_value}")
+        print(f"Total Weight: {total_weight} <= {self.max_weight}")
+        print(f"Selected Items: {best_solution}")
+        
+        return best_solution, total_value, fitness_history
