@@ -14,7 +14,7 @@ from src.algorithms.swarm_algorithms.FA import FireflyAlgorithm
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColony 
 from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
 
-from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmContinuos
+from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmContinuous
 from src.algorithms.traditional_algorithms.HC import HillClimbing
 from src.algorithms.traditional_algorithms.SA import SimulatedAnnealing
 
@@ -129,7 +129,7 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
         population = None
 
     elif algo_name == 'GA':
-        best_sol, best_fit = GeneticAlgorithmContinuos(
+        best_sol, best_fit = GeneticAlgorithmContinuous(
             fitness_func=sphere,
             lower_bound=LOWER_BOUND,
             upper_bound=UPPER_BOUND,
