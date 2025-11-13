@@ -8,7 +8,7 @@ class ArtificialBeeColony:
         upper_bound=5.12,
         problem_size=30,
         num_employed_bees=100,
-        numa_onlooker_bees=100,
+        num_onlooker_bees=100,
         max_iterations=200,
         limit=50,
         seed=None
