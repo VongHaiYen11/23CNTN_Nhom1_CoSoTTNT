@@ -61,14 +61,16 @@ def run_knapsack():
     # === ABC ===
     start = time.time()
     abc = ArtificialBeeColonyKnapsack(
-        fitness_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
-        problem_size=N_ITEMS,
-        num_employed_bees=POP_SIZE//2,
-        num_onlooker_bees=POP_SIZE//2,
-        max_iterations=MAX_ITER,
-        limit=50,
-        seed=SEED
+        weights=WEIGHTS,
+        values=VALUES,
+        max_weight=MAX_WEIGHT,
+        dim=N_ITEMS,
+        num_employed_bees=POP_SIZE,
+        num_onlooker_bees=POP_SIZE,
+        max_iterations=MAX_ITER * 5,
+        limit=30,
+        seed=SEED,
+       # verbose=True
     )
     sol_abc, fit_abc, hist_abc = abc.run()
     end = time.time()
@@ -83,12 +85,14 @@ def run_knapsack():
     # === FA ===
     start = time.time()
     fa = FireflyKnapsack(
-        objective_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
-        dimension=N_ITEMS,
+        weights=WEIGHTS,
+        values=VALUES,
+        max_weight=MAX_WEIGHT,
+     #   dim=N_ITEMS,
         population_size=POP_SIZE,
-        max_iterations=MAX_ITER,
-        seed=SEED
+        max_iterations=MAX_ITER * 5,
+        seed=SEED,
+      #  verbose=True
     )
     sol_fa, fit_fa, hist_fa = fa.run()
     end = time.time()

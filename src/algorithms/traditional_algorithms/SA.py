@@ -1,8 +1,11 @@
 import numpy as np
 
+import numpy as np
+
 class SimulatedAnnealing:
   def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
-               max_iter=100, step_size=0.1, initial_temp=100, seed=None, verbose=False):
+               max_iter=100, step_size=0.1, initial_temp=100,
+               seed=None, verbose=False):
     if seed is not None:
       np.random.seed(seed)
 
@@ -15,41 +18,37 @@ class SimulatedAnnealing:
     self.initial_temp = initial_temp
     self.verbose = verbose
 
-    # Khởi tạo nghiệm ban đầu
-    self.current_solution = np.zeros(self.dim)
-    self.current_fitness = self.fitness_func(self.current_solution)
-    self.best_solution = self.current_solution.copy()
-    self.best_fitness = self.current_fitness
-
   def run(self):
+    current_solution = np.random.uniform(self.lower_bound, self.upper_bound, size=self.dim)
+    current_fitness = self.fitness_func(current_solution)
+    best_solution = current_solution.copy()
+    best_fitness = current_fitness
+
     for i in range(1, self.max_iter + 1):
       temp = self.initial_temp * (1 - i / self.max_iter)
       if temp < 1e-8:
         temp = 1e-8
 
-      # Sinh neighbor
       perturbation = np.random.uniform(-self.step_size, self.step_size, size=self.dim)
-      candidate = np.clip(self.current_solution + perturbation, self.lower_bound, self.upper_bound)
+      candidate = np.clip(current_solution + perturbation, self.lower_bound, self.upper_bound)
       candidate_fitness = self.fitness_func(candidate)
 
-      # Quyết định chấp nhận
       accept = (
-        candidate_fitness < self.current_fitness
-        or np.random.rand() < np.exp(-(candidate_fitness - self.current_fitness) / temp)
+        candidate_fitness < current_fitness
+        or np.random.rand() < np.exp(-(candidate_fitness - current_fitness) / temp)
       )
 
       if accept:
-        self.current_solution = candidate
-        self.current_fitness = candidate_fitness
-        if self.current_fitness < self.best_fitness:
-          self.best_solution = self.current_solution.copy()
-          self.best_fitness = self.current_fitness
+        current_solution = candidate
+        current_fitness = candidate_fitness
+        if current_fitness < best_fitness:
+          best_solution = current_solution.copy()
+          best_fitness = current_fitness
 
       if self.verbose:
-        print(f"Iteration {i}: Temp={temp:.4f}, Best fitness={self.best_fitness:.6f}")
+        print(f"Iteration {i}: Temp={temp:.4f}, Best fitness={best_fitness:.6f}")
 
-    print(self.best_solution, self.best_fitness)
-    return self.best_solution, self.best_fitness
+    return best_solution, best_fitness
 
 class SimulatedAnnealingKnapsack:
     def __init__(self, weights, values, capacity, dim=None,
