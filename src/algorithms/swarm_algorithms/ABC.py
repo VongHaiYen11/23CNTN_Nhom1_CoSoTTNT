@@ -221,7 +221,9 @@ class ArtificialBeeColonyKnapsack:
         num_onlooker_bees=50,
         max_iterations=200,
         limit=30,
+        dim=None,
         seed=None
+        
     ):
         """
         ABC cho Knapsack 0/1 Problem (discrete optimization).
@@ -296,9 +298,9 @@ class ArtificialBeeColonyKnapsack:
         
         if total_weight > self.max_weight:
             penalty = 1e6 * (total_weight - self.max_weight)  # phạt mạnh
-            return -penalty  # vì ABC mặc định minimize
+            return -1e9  # vì ABC mặc định minimize
         else:
-            return -total_value  # chuyển max → min
+            return total_value  # chuyển max → min
 
     def _binary_mutation(self, x_i, x_k):
         """

@@ -13,6 +13,7 @@ from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
 from src.algorithms.swarm_algorithms.FA import FireflyAlgorithm  
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColony 
 from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
+from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationContinuous
 
 from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmContinuous
 from src.algorithms.traditional_algorithms.HC import HillClimbing
@@ -41,7 +42,7 @@ PARAM_VARIATIONS = {
 }
 
 # List algos để so sánh (swarm + traditional, focus continuous Sphere)
-ALGOS = ['FA', 'ABC', 'Cuckoo', 'PSO', 'HC', 'GA', 'SA']  # Add ACO/CS nếu implement
+ALGOS = ['FA', 'ABC', 'Cuckoo', 'PSO', 'HC', 'GA', 'SA', 'ACO']  # Add ACO/CS nếu implement
 
 def measure_space_usage(obj):
     """Ước lượng space complexity (bytes) bằng sys.getsizeof, recursive cho arrays/lists.
@@ -115,6 +116,18 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
         
         hist = [best_fit] * MAX_ITERATIONS  # placeholder, vì class chưa trả history
         population = None  # PSO có particles, add nếu implement
+
+    elif algo_name == 'ACO':
+        best_sol, best_fit = AntColonyOptimizationContinuous(
+            fitness_func=sphere,
+            lower_bound=LOWER_BOUND,
+            upper_bound=UPPER_BOUND,
+            dim=dim,
+            max_iter=MAX_ITERATIONS,
+            seed=seed
+        ).run()
+        hist = [best_fit] * MAX_ITERATIONS  # No hist, placeholder
+        population = None
 
     elif algo_name == 'HC':
         best_sol, best_fit = HillClimbing(
