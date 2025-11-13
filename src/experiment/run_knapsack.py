@@ -7,7 +7,7 @@ import pandas as pd
 
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColonyKnapsack
 from src.algorithms.swarm_algorithms.FA import  FireflyKnapsack
-from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
+from src.algorithms.swarm_algorithms.PSO import ParitcleSwarmKnapsack
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearchKnapsack
 from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationKnapsack
 from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmKnapsack
@@ -59,46 +59,46 @@ def run_knapsack():
     print(f"Pop Size = {POP_SIZE}, Max Iterations = {MAX_ITER}, Items = {N_ITEMS}\n")
 
     # === ABC ===
-    start = time.time()
-    abc = ArtificialBeeColonyKnapsack(
-        fitness_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
-        problem_size=N_ITEMS,
-        num_employed_bees=POP_SIZE//2,
-        num_onlooker_bees=POP_SIZE//2,
-        max_iterations=MAX_ITER,
-        limit=50,
-        seed=SEED
-    )
-    sol_abc, fit_abc, hist_abc = abc.run()
-    end = time.time()
-    bin_abc = (sol_abc > 0).astype(int)
-    results['ABC'] = {
-        'value': np.sum(bin_abc * VALUES),
-        'weight': np.sum(bin_abc * WEIGHTS),
-        'binary': bin_abc,
-        'time': end - start
-    }
+    # start = time.time()
+    # abc = ArtificialBeeColonyKnapsack(
+    #     fitness_function=knapsack_fitness_continuos,
+    #     lower_bound=LB, upper_bound=UB,
+    #     problem_size=N_ITEMS,
+    #     num_employed_bees=POP_SIZE//2,
+    #     num_onlooker_bees=POP_SIZE//2,
+    #     max_iterations=MAX_ITER,
+    #     limit=50,
+    #     seed=SEED
+    # )
+    # sol_abc, fit_abc, hist_abc = abc.run()
+    # end = time.time()
+    # bin_abc = (sol_abc > 0).astype(int)
+    # results['ABC'] = {
+    #     'value': np.sum(bin_abc * VALUES),
+    #     'weight': np.sum(bin_abc * WEIGHTS),
+    #     'binary': bin_abc,
+    #     'time': end - start
+    # }
 
     # === FA ===
-    start = time.time()
-    fa = FireflyKnapsack(
-        objective_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
-        dimension=N_ITEMS,
-        population_size=POP_SIZE,
-        max_iterations=MAX_ITER,
-        seed=SEED
-    )
-    sol_fa, fit_fa, hist_fa = fa.run()
-    end = time.time()
-    bin_fa = (sol_fa > 0).astype(int)
-    results['FA'] = {
-        'value': np.sum(bin_fa * VALUES),
-        'weight': np.sum(bin_fa * WEIGHTS),
-        'binary': bin_fa,
-        'time': end - start
-    }
+    # start = time.time()
+    # fa = FireflyKnapsack(
+    #     objective_function=knapsack_fitness_continuos,
+    #     lower_bound=LB, upper_bound=UB,
+    #     dimension=N_ITEMS,
+    #     population_size=POP_SIZE,
+    #     max_iterations=MAX_ITER,
+    #     seed=SEED
+    # )
+    # sol_fa, fit_fa, hist_fa = fa.run()
+    # end = time.time()
+    # bin_fa = (sol_fa > 0).astype(int)
+    # results['FA'] = {
+    #     'value': np.sum(bin_fa * VALUES),
+    #     'weight': np.sum(bin_fa * WEIGHTS),
+    #     'binary': bin_fa,
+    #     'time': end - start
+    # }
 
     # === Cuckoo Search ===
     print("\n--- Cuckoo Search ---")
@@ -125,13 +125,15 @@ def run_knapsack():
 
     # === PSO ===
     start = time.time()
-    pso = ParticleSwarmOptimization(
-        objective_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
+    pso = ParitcleSwarmKnapsack (
+        weights=WEIGHTS,
+        values=VALUES,
+        capacity=MAX_WEIGHT,
         dim=N_ITEMS,
         population_size=POP_SIZE,
         max_iter=MAX_ITER,
-        seed=SEED
+        seed=SEED,
+        verbose=True
     )
     sol_pso, fit_pso = pso.run()
     end = time.time()
@@ -146,16 +148,11 @@ def run_knapsack():
     # === ACO ===
     start = time.time()
     aco = AntColonyOptimizationKnapsack(
-        fitness_function=knapsack_fitness_discrete,
         weights=WEIGHTS,
         values=VALUES,
         capacity=MAX_WEIGHT,
         n_ants=POP_SIZE,
         max_iter=MAX_ITER,
-        alpha=1,
-        beta=2,
-        rho=0.3,
-        Q=1,
         seed=SEED
     )
     sol_aco, fit_aco = aco.run()

@@ -87,3 +87,108 @@ class ParticleSwarmOptimization:
         print(f"Best Solution: {gbest}")
 
         return gbest, gbest_value
+
+
+import numpy as np
+
+class ParitcleSwarmKnapsack:
+    def __init__(self, weights, values, capacity, dim=None,
+                 population_size=30, max_iter=1000, w=0.7, c1=1.5, c2=1.5,
+                 seed=None, verbose=True):
+        """
+        Particle Swarm Optimization (PSO) cho bài toán Knapsack (rời rạc 0-1)
+        """
+        if seed is not None:
+            np.random.seed(seed)
+
+        self.weights = np.array(weights)
+        self.values = np.array(values)
+        self.capacity = capacity
+        self.dim = dim if dim is not None else len(weights)
+
+        self.population_size = population_size
+        self.max_iter = max_iter
+        self.w = w
+        self.c1 = c1
+        self.c2 = c2
+        self.verbose = verbose
+        self.seed = seed
+
+    def fitness(self, solution):
+        """Tính giá trị tổng (chỉ hợp lệ mới tính)."""
+        total_weight = np.sum(solution * self.weights)
+        total_value = np.sum(solution * self.values)
+        if total_weight > self.capacity:
+            return 0  # hoặc -inf, nhưng 0 giúp tránh lỗi nan
+        return total_value
+
+    def sigmoid_solution(self, x):
+        """Ánh xạ giá trị thực sang nhị phân và đảm bảo hợp lệ."""
+        s = 1 / (1 + np.exp(-x))
+        sol = (s > 0.5).astype(int)
+        while np.sum(sol * self.weights) > self.capacity:
+            ones = np.where(sol == 1)[0]
+            if len(ones) == 0:
+                break
+            sol[np.random.choice(ones)] = 0
+        return sol
+
+    def initialize_population(self):
+        """Khởi tạo quần thể ngẫu nhiên trong [-4, 4]."""
+        positions = np.random.uniform(-4, 4, (self.population_size, self.dim))
+        velocities = np.zeros((self.population_size, self.dim))
+        return positions, velocities
+
+    def run(self):
+        """Main PSO loop."""
+        positions, velocities = self.initialize_population()
+
+        # Chuyển sang nhị phân và tính fitness
+        binary_positions = np.array([self.sigmoid_solution(x) for x in positions])
+        fitness = np.array([self.fitness(x) for x in binary_positions])
+
+        pbest = positions.copy()
+        pbest_fitness = fitness.copy()
+        gbest_idx = np.argmax(fitness)
+        gbest = positions[gbest_idx].copy()
+        gbest_fitness = fitness[gbest_idx]
+
+        for t in range(1, self.max_iter + 1):
+            r1 = np.random.rand(self.population_size, self.dim)
+            r2 = np.random.rand(self.population_size, self.dim)
+
+            velocities = (
+                self.w * velocities
+                + self.c1 * r1 * (pbest - positions)
+                + self.c2 * r2 * (gbest - positions)
+            )
+            positions = positions + velocities
+
+            # Cập nhật cá thể nhị phân và fitness
+            binary_positions = np.array([self.sigmoid_solution(x) for x in positions])
+            fitness = np.array([self.fitness(x) for x in binary_positions])
+
+            # Cập nhật pbest
+            improved = fitness > pbest_fitness
+            pbest[improved] = positions[improved]
+            pbest_fitness[improved] = fitness[improved]
+
+            # Cập nhật gbest
+            best_idx = np.argmax(fitness)
+            if fitness[best_idx] > gbest_fitness:
+                gbest = positions[best_idx].copy()
+                gbest_fitness = fitness[best_idx]
+
+            if self.verbose and (t % 50 == 0 or t == self.max_iter):
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {gbest_fitness}")
+
+        # Giải pháp nhị phân cuối cùng
+        best_solution = self.sigmoid_solution(gbest)
+        best_value = self.fitness(best_solution)
+
+        print("\n=== Final Result (PSO-Knapsack) ===")
+        print(f"Best fitness (total value): {best_value}")
+        print(f"Best solution: {best_solution}")
+        print(f"Total weight: {np.sum(best_solution * self.weights)}")
+
+        return best_solution, best_value
