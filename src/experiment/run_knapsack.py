@@ -139,7 +139,7 @@ def run_knapsack():
         seed=SEED,
         verbose=True
     )
-    sol_pso, fit_pso = pso.run()
+    sol_pso, fit_pso, hist_pso = pso.run()
     end = time.time()
     bin_pso = (sol_pso > 0).astype(int)
     results['PSO'] = {
@@ -159,7 +159,7 @@ def run_knapsack():
         max_iter=MAX_ITER,
         seed=SEED
     )
-    sol_aco, fit_aco = aco.run()
+    sol_aco, fit_aco, hist_aco = aco.run()
     end = time.time()
     bin_aco = (sol_aco > 0).astype(int)
     results['ACO'] = {

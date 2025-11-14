@@ -110,7 +110,7 @@ class AntColonyOptimizationContinuous:
             if verbose and (it % 20 == 0 or it == self.max_iter - 1):
                 print(f"Iter {it+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
-        return self.best_solution, self.best_fitness
+        return self.best_solution, self.best_fitness, self.history
 
 
 import numpy as np
@@ -238,4 +238,4 @@ class AntColonyOptimizationKnapsack:
         print(f"Total value: {self.best_fitness}")
         print(f"Total weight: {np.sum(self.best_solution * self.weights)}")
 
-        return self.best_solution, self.best_fitness
+        return self.best_solution, self.best_fitness, self.history

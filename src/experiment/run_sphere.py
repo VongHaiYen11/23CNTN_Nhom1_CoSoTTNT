@@ -104,7 +104,7 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
         population = None
     
     elif algo_name == 'PSO':
-        best_sol, best_fit = ParticleSwarmOptimization(
+        pso = best_sol, best_fit = ParticleSwarmOptimization(
             objective_function=sphere,
             lower_bound=LOWER_BOUND,
             upper_bound=UPPER_BOUND,
@@ -113,12 +113,12 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
             max_iter=MAX_ITERATIONS,
             seed=seed
         ).run()
-        
+        best_sol, best_fit, hist = pso.run()
         hist = [best_fit] * MAX_ITERATIONS  # placeholder, vì class chưa trả history
         population = None  # PSO có particles, add nếu implement
 
     elif algo_name == 'ACO':
-        best_sol, best_fit = AntColonyOptimizationContinuous(
+        aco = best_sol, best_fit = AntColonyOptimizationContinuous(
             fitness_func=sphere,
             lower_bound=LOWER_BOUND,
             upper_bound=UPPER_BOUND,
@@ -126,7 +126,7 @@ def run_algorithm(algo_name, dim, pop_size, seed, param_vary=None):
             max_iter=MAX_ITERATIONS,
             seed=seed
         ).run()
-        hist = [best_fit] * MAX_ITERATIONS  # No hist, placeholder
+        best_sol, best_fit, hist = aco.run()
         population = None
 
     elif algo_name == 'HC':
