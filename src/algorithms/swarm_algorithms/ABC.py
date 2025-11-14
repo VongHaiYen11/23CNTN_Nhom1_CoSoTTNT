@@ -200,8 +200,6 @@ class ArtificialBeeColony:
             # print(f"Iteration {iteration+1}/{self.max_iterations}, Best Fitness: {best_fitness:.6f}")
 
         print("\n--- Optimization Results ABC ---")
-        print(f"Best Fitness: {best_fitness}")
-        print(f"Best Solution: {best_solution}")
 
         self.food_sources = food_sources
         return best_solution, best_fitness, fitness_history
@@ -406,4 +404,4 @@ class ArtificialBeeColonyKnapsack:
         print(f"Selected Items: {best_items.tolist()}")
         print(f"Total Weight: {np.dot(best_sol, self.weights):.2f}/{self.max_weight}")
 
-        return best_sol, best_value, history
+        return best_sol, best_fit, history

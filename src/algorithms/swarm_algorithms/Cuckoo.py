@@ -59,6 +59,7 @@ class CuckooSearch:
         """Main optimization loop."""
         print("\n--- Cuckoo Search ---")
         n = self.population_size
+        hist = []
         nests = np.random.uniform(self.lower_bound, self.upper_bound, (n, self.dim))
         fitness = np.array([self.fitness_func(x) for x in nests])
 
@@ -75,12 +76,18 @@ class CuckooSearch:
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
 
-            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
+            hist.append(fmin)
+            # if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
+            #     print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
+
 
             t += 1
+        print("\n--- Optimization Results (Cuckoo Search) ---")
+        return best, fmin, hist
 
-        return best, fmin
+##################################################
+## Cuckoo Search for Knapsack Problem
+##################################################
 
 import numpy as np
 import math
@@ -184,6 +191,7 @@ class CuckooSearchKnapsack:
         best = nests[best_idx].copy()
         fmax = fitness[best_idx]
 
+        hist = []
         for t in range(1, self.max_iter + 1):
             # if self.verbose:
             #     print(f"\nIteration {t}/{self.max_iter}")
@@ -197,10 +205,12 @@ class CuckooSearchKnapsack:
             #     print("Empty Eggs Phase:")
 
             # Empty nest phase
+            
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
+            hist.append(fmax)
 
-        return best
+        return best, fmax, hist
 
 if __name__ == "__main__":
     # Ví dụ nhỏ Knapsack

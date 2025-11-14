@@ -128,13 +128,10 @@ class FireflyAlgorithm:
                 fireflies, intensity, best_solution, best_fitness, fitness_history
             )
 
-            # if (iteration + 1) % 10 == 0 or iteration == 0:
-            #     print(f"Iteration {iteration+1}/{self.max_iterations}, Best Fitness = {best_fitness:.6f}")
-
         self.fireflies = fireflies
         print("\n--- Optimization Results (FA) ---")
-        print(f"Best Fitness: {best_fitness}")
-        print(f"Best Solution: {best_solution}")
+        # print(f"Best Fitness: {best_fitness}")
+        # print(f"Best Solution: {best_solution}")
 
         return best_solution, best_fitness, fitness_history
     

@@ -19,6 +19,7 @@ class SimulatedAnnealing:
     self.verbose = verbose
 
   def run(self):
+    hist = []
     current_solution = np.random.uniform(self.lower_bound, self.upper_bound, size=self.dim)
     current_fitness = self.fitness_func(current_solution)
     best_solution = current_solution.copy()
@@ -45,10 +46,12 @@ class SimulatedAnnealing:
           best_solution = current_solution.copy()
           best_fitness = current_fitness
 
+      hist.append(best_fitness)
       if self.verbose:
         print(f"Iteration {i}: Temp={temp:.4f}, Best fitness={best_fitness:.6f}")
 
-    return best_solution, best_fitness
+    print("\n--- Optimization Results (SimilateAnnealing) ---")
+    return best_solution, best_fitness, hist
 
 class SimulatedAnnealingKnapsack:
     def __init__(self, weights, values, capacity, dim=None,

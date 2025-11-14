@@ -22,6 +22,7 @@ class GeneticAlgorithmContinuous:
     return np.array([self.fitness_func(ind) for ind in self.population])
 
   def run(self):
+    hist = []
     for i in range(self.max_iter):
       fitness_values = self.evaluate_population()
       sorted_idx = np.argsort(fitness_values)
@@ -52,9 +53,12 @@ class GeneticAlgorithmContinuous:
 
       # ---- New population ----
       self.population = np.vstack((elites, crossed, mutated))
+      hist.append(best_fitness)
+
+    print("\n--- Optimization Results (GA Continuous) ---")
 
     best_solution = self.population[0]
-    return best_solution, self.fitness_func(best_solution)
+    return best_solution, self.fitness_func(best_solution), hist
 
 
 class GeneticAlgorithmKnapsack:
@@ -156,6 +160,7 @@ class GeneticAlgorithmKnapsack:
     best_fitness = 0
     best_solution = np.empty((0, self.dim), dtype=int)
 
+    hist = []
     for t in range(self.max_iter):
       elites = self.elitism_selection()
       new_population = elites
@@ -181,7 +186,8 @@ class GeneticAlgorithmKnapsack:
         best_fitness = new_best_fitness
         best_solution = self.population[0]
 
+      hist.append(best_fitness)
       if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
         print(f"Iteration {t+1}/{self.max_iter}: best fitness = {best_fitness:.2f}")
 
-    return best_solution
+    return best_solution, best_fitness, hist

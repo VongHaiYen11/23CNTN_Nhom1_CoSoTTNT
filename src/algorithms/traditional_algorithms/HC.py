@@ -18,6 +18,7 @@ class HillClimbing:
         # Khởi tạo nghiệm ban đầu ngẫu nhiên
         current_solution = np.random.uniform(self.lower_bound, self.upper_bound, size=self.dim)
         current_fitness = self.fitness_func(current_solution)
+        hist = [current_fitness]
 
         step = (self.upper_bound - self.lower_bound) * 0.1
 
@@ -40,11 +41,13 @@ class HillClimbing:
                 if self.verbose:
                     print("No improvement, stopping.")
                 break  # Không cải thiện → hội tụ
-
-            if self.verbose:
-                print(f"Iteration {iteration + 1}: best fitness = {current_fitness:.6f} \nbest_solution = {current_solution}")
-
-        return current_solution, current_fitness
+            hist.append(current_fitness)
+            
+            # if self.verbose:
+            #     print(f"Iteration {iteration + 1}: best fitness = {current_fitness:.6f} \nbest_solution = {current_solution}")
+        
+        print("\n--- Optimization Results (Hill Climbing) ---")
+        return current_solution, current_fitness, hist
 
 class HillClimbingKnapsack:
     def __init__(self, weights, values, capacity, dim=None,
@@ -89,6 +92,7 @@ class HillClimbingKnapsack:
             best_solution = np.random.randint(0, 2, size=self.dim)
         best_fitness = self.fitness(best_solution)
 
+        hist = [best_fitness]
         for iteration in range(1, self.max_iter + 1):
             neighbors = self.generate_neighbors(best_solution)
             if not neighbors:
@@ -106,8 +110,9 @@ class HillClimbingKnapsack:
                 best_fitness = best_neighbor_fitness
             else:
                 break  # không cải thiện → hội tụ
-
+            
+            hist.append(best_fitness)
             if self.verbose:
                 print(f"Iteration {iteration}: best fitness = {best_fitness:.6f}")
 
-        return best_solution
+        return best_solution, best_fitness, hist
