@@ -18,9 +18,9 @@ class CuckooSearch:
         self.beta = beta
         self.max_iter = max_iter
         self.verbose = verbose
+        self.history = []
 
     def levy_flight(self, size):
-        """Generate Lévy flight step using Mantegna’s algorithm."""
         beta = self.beta
         sigma = (math.gamma(1 + beta) * math.sin(math.pi * beta / 2) /
                  (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))) ** (1 / beta)
@@ -29,7 +29,6 @@ class CuckooSearch:
         return u / (np.abs(v) ** (1 / beta))
 
     def get_best_nest(self, nests, new_nests, fitness):
-        """Evaluate and update nests if new ones are better."""
         new_fitness = np.array([self.fitness_func(x) for x in new_nests])
         improved = new_fitness < fitness
         fitness[improved] = new_fitness[improved]
@@ -38,7 +37,6 @@ class CuckooSearch:
         return nests, fitness, nests[best_idx], fitness[best_idx]
 
     def empty_nests(self, nests):
-        """Replace a fraction pa of worst nests (discovery)."""
         n = self.population_size
         K = np.random.rand(n, self.dim) > self.pa
         perm1 = np.random.permutation(n)
@@ -48,7 +46,6 @@ class CuckooSearch:
         return np.clip(new_nests, self.lower_bound, self.upper_bound)
 
     def get_cuckoos(self, nests, best):
-        """Generate new solutions via Lévy flight."""
         n = self.population_size
         steps = self.levy_flight((n, self.dim))
         stepsize = self.alpha * steps * (nests - best)
@@ -56,38 +53,26 @@ class CuckooSearch:
         return np.clip(new_nests, self.lower_bound, self.upper_bound)
     
     def run(self):
-        """Main optimization loop."""
-        print("\n--- Cuckoo Search ---")
         n = self.population_size
         hist = []
         nests = np.random.uniform(self.lower_bound, self.upper_bound, (n, self.dim))
         fitness = np.array([self.fitness_func(x) for x in nests])
-
         best_idx = np.argmin(fitness)
         best = nests[best_idx].copy()
         fmin = fitness[best_idx]
         t = 0
         while t < self.max_iter:
-            # Lévy flight phase
             new_nests = self.get_cuckoos(nests, best)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
-
-            # Empty nest phase
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
 
-            hist.append(fmin)
-            # if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
-            #     print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
-
+            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
+                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
 
             t += 1
-        print("\n--- Optimization Results (Cuckoo Search) ---")
-        return best, fmin, hist
 
-##################################################
-## Cuckoo Search for Knapsack Problem
-##################################################
+        return best, fmin
 
 import numpy as np
 import math
@@ -103,13 +88,13 @@ class CuckooSearchKnapsack:
         self.values = np.array(values)
         self.capacity = capacity
         self.dim = dim if dim is not None else len(weights)
-
         self.population_size = population_size
         self.pa = pa
         self.alpha = alpha
         self.beta = beta
         self.max_iter = max_iter
         self.verbose = verbose
+        self.history = []
 
     def fitness(self, solution):
         return np.sum(solution * self.values)
@@ -118,7 +103,6 @@ class CuckooSearchKnapsack:
         return np.sum(solution * self.weights) <= self.capacity
 
     def get_random_nest(self):
-        """Sinh 1 nest hợp lệ ngẫu nhiên."""
         while True:
             nest = np.random.randint(0, 2, size=self.dim)
             if self.is_valid(nest):
@@ -128,7 +112,6 @@ class CuckooSearchKnapsack:
         return np.array([self.get_random_nest() for _ in range(self.population_size)])
 
     def levy_flight(self, size):
-        """Lévy flight step using Mantegna’s algorithm."""
         beta = self.beta
         sigma = (math.gamma(1 + beta) * math.sin(math.pi * beta / 2) /
                  (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))) ** (1 / beta)
@@ -137,7 +120,6 @@ class CuckooSearchKnapsack:
         return u / (np.abs(v) ** (1 / beta))
 
     def sigmoid_solution(self, x):
-        """Map continuous solution to 0/1 and enforce capacity."""
         s = 1 / (1 + np.exp(-x))
         sol = (s > 0.5).astype(int)
         while not self.is_valid(sol):
@@ -146,28 +128,16 @@ class CuckooSearchKnapsack:
         return sol
 
     def get_best_nest(self, nests, new_nests, fitness):
-        """Cập nhật nests nếu new_nests tốt hơn và đảm bảo fitness khớp."""
         new_fitness = np.array([self.fitness(x) for x in new_nests])
         improved = new_fitness > fitness
-
         for i in range(self.population_size):
             if improved[i]:
                 nests[i] = new_nests[i].copy()
                 fitness[i] = new_fitness[i]
-
         best_idx = np.argmax(fitness)
-        
-        # Debug 
-        # for i, nest in enumerate(nests):
-        #     print(f"Nest {i}: {nest}, fitness = {self.fitness(nest)}")
-        # print("Best index:", best_idx)
-        # print("Best nest:", nests[best_idx])
-        # print("Best fitness:", fitness[best_idx])
-
         return nests, fitness, nests[best_idx].copy(), fitness[best_idx]
 
     def empty_nests(self, nests):
-        """Thay thế một số nest với xác suất pa bằng get_random_nest."""
         new_nests = nests.copy()
         for i in range(self.population_size):
             if np.random.rand() < self.pa:
@@ -175,7 +145,6 @@ class CuckooSearchKnapsack:
         return new_nests
 
     def get_cuckoos(self, nests, best):
-        """Sinh nests mới bằng Lévy flight + sigmoid."""
         n = self.population_size
         steps = self.levy_flight((n, self.dim))
         stepsize = self.alpha * steps * (nests - best)
@@ -184,20 +153,13 @@ class CuckooSearchKnapsack:
         return new_nests
 
     def run(self):
-        """Main optimization loop."""
         nests = self.initialize_population()
         fitness = np.array([self.fitness(x) for x in nests])
         best_idx = np.argmax(fitness)
         best = nests[best_idx].copy()
         fmax = fitness[best_idx]
 
-        hist = []
         for t in range(1, self.max_iter + 1):
-            # if self.verbose:
-            #     print(f"\nIteration {t}/{self.max_iter}")
-            #     print("Cuckoo Eggs Phase:")
-            
-            # Lévy flight phase
             new_nests = self.get_cuckoos(nests, best)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
 
@@ -205,12 +167,10 @@ class CuckooSearchKnapsack:
             #     print("Empty Eggs Phase:")
 
             # Empty nest phase
-            
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
-            hist.append(fmax)
 
-        return best, fmax, hist
+        return best
 
 if __name__ == "__main__":
     # Ví dụ nhỏ Knapsack

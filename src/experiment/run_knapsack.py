@@ -7,7 +7,7 @@ import pandas as pd
 
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColonyKnapsack
 from src.algorithms.swarm_algorithms.FA import  FireflyKnapsack
-from src.algorithms.swarm_algorithms.PSO import ParticleSwarmOptimization
+from src.algorithms.swarm_algorithms.PSO import ParitcleSwarmKnapsack
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearchKnapsack
 from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationKnapsack
 from src.algorithms.traditional_algorithms.GA import GeneticAlgorithmKnapsack
@@ -129,15 +129,17 @@ def run_knapsack():
 
     # === PSO ===
     start = time.time()
-    pso = ParticleSwarmOptimization(
-        objective_function=knapsack_fitness_continuos,
-        lower_bound=LB, upper_bound=UB,
+    pso = ParitcleSwarmKnapsack (
+        weights=WEIGHTS,
+        values=VALUES,
+        capacity=MAX_WEIGHT,
         dim=N_ITEMS,
         population_size=POP_SIZE,
         max_iter=MAX_ITER,
-        seed=SEED
+        seed=SEED,
+        verbose=True
     )
-    sol_pso, fit_pso = pso.run()
+    sol_pso, fit_pso, hist_pso = pso.run()
     end = time.time()
     bin_pso = (sol_pso > 0).astype(int)
     results['PSO'] = {
@@ -150,19 +152,14 @@ def run_knapsack():
     # === ACO ===
     start = time.time()
     aco = AntColonyOptimizationKnapsack(
-        fitness_function=knapsack_fitness_discrete,
         weights=WEIGHTS,
         values=VALUES,
         capacity=MAX_WEIGHT,
         n_ants=POP_SIZE,
         max_iter=MAX_ITER,
-        alpha=1,
-        beta=2,
-        rho=0.3,
-        Q=1,
         seed=SEED
     )
-    sol_aco, fit_aco = aco.run()
+    sol_aco, fit_aco, hist_aco = aco.run()
     end = time.time()
     bin_aco = (sol_aco > 0).astype(int)
     results['ACO'] = {

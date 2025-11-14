@@ -141,6 +141,7 @@ class ParitcleSwarmKnapsack:
 
     def run(self):
         """Main PSO loop."""
+        self.history = []  # reset history mỗi lần chạy
         positions, velocities = self.initialize_population()
 
         # Chuyển sang nhị phân và tính fitness
@@ -153,7 +154,9 @@ class ParitcleSwarmKnapsack:
         gbest = positions[gbest_idx].copy()
         gbest_fitness = fitness[gbest_idx]
 
-        history = []
+        # lưu vào history
+        self.history.append(gbest_fitness)
+
         for t in range(1, self.max_iter + 1):
             r1 = np.random.rand(self.population_size, self.dim)
             r2 = np.random.rand(self.population_size, self.dim)
@@ -180,7 +183,9 @@ class ParitcleSwarmKnapsack:
                 gbest = positions[best_idx].copy()
                 gbest_fitness = fitness[best_idx]
 
-            history.append(gbest_fitness)
+            # lưu history
+            self.history.append(gbest_fitness)
+
             if self.verbose and (t % 50 == 0 or t == self.max_iter):
                 print(f"Iteration {t}/{self.max_iter}: best fitness = {gbest_fitness}")
 
@@ -193,4 +198,4 @@ class ParitcleSwarmKnapsack:
         print(f"Best solution: {best_solution}")
         print(f"Total weight: {np.sum(best_solution * self.weights)}")
 
-        return best_solution, best_value, history
+        return best_solution, best_value, self.history

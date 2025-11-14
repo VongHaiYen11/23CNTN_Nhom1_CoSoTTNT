@@ -17,6 +17,7 @@ class GeneticAlgorithmContinuous:
     self.sigma = sigma
     self.population = np.random.uniform(lower_bound, upper_bound,
                                         (population_size, dim))
+    self.history = []
 
   def evaluate_population(self):
     return np.array([self.fitness_func(ind) for ind in self.population])
@@ -29,36 +30,31 @@ class GeneticAlgorithmContinuous:
       self.population = self.population[sorted_idx]
       best_fitness = fitness_values[sorted_idx[0]]
 
-      # ---- Elitism ----
       elites = self.population[:self.elitism]
 
-      # ---- Selection (tournament 2-way, vectorized) ----
       idx1 = np.random.randint(0, self.population_size, self.population_size)
       idx2 = np.random.randint(0, self.population_size, self.population_size)
       better = fitness_values[idx1] < fitness_values[idx2]
       selected = np.where(better[:, None], self.population[idx1], self.population[idx2])
 
-      # ---- Crossover ----
       n_crossover = int(self.population_size * 0.4)
       parents_idx = np.random.randint(0, len(selected), (n_crossover, 2))
       dads = selected[parents_idx[:, 0]]
       moms = selected[parents_idx[:, 1]]
-      crossed = self.alpha * dads + (1 - self.alpha) * moms  # no copy needed
+      crossed = self.alpha * dads + (1 - self.alpha) * moms
 
-      # ---- Mutation ----
       n_mutation = self.population_size - len(elites) - len(crossed)
       parents = selected[np.random.randint(0, len(selected), n_mutation)]
       mutations = self.sigma * np.random.randn(n_mutation, self.dim)
       mutated = np.clip(parents + mutations, self.lower_bound, self.upper_bound)
 
-      # ---- New population ----
       self.population = np.vstack((elites, crossed, mutated))
-      hist.append(best_fitness)
+
+    self.history.append(best_fitness)
 
     print("\n--- Optimization Results (GA Continuous) ---")
-
     best_solution = self.population[0]
-    return best_solution, self.fitness_func(best_solution), hist
+    return best_solution, self.fitness_func(best_solution), self.history
 
 
 class GeneticAlgorithmKnapsack:
@@ -84,8 +80,8 @@ class GeneticAlgorithmKnapsack:
     self.verbose = verbose
 
     self.population = self.initialize_population()
+    self.history = []
 
-  # --- Initialization ---
   def initialize_population(self):
     population = []
     while len(population) < self.population_size:
@@ -94,14 +90,12 @@ class GeneticAlgorithmKnapsack:
         population.append(individual)
     return np.array(population)
 
-  # --- Fitness ---
   def fitness_func(self, x):
     return np.sum(x * self.values)
 
   def is_valid(self, x):
     return np.sum(x * self.weights) <= self.capacity
 
-  # --- Sorting & Elitism ---
   def sort_population(self):
     fitness_values = np.array([self.fitness_func(ind) for ind in self.population])
     idx = np.argsort(-fitness_values)
@@ -111,7 +105,6 @@ class GeneticAlgorithmKnapsack:
     self.sort_population()
     return self.population[:self.elitism]
 
-  # --- Selection ---
   def selection(self, n_select):
     selection_pool = []
     for _ in range(n_select):
@@ -123,12 +116,10 @@ class GeneticAlgorithmKnapsack:
       return self.population[np.random.choice(self.population_size, size=n_select)]
     return np.array(selection_pool)
 
-  # --- Crossover ---
   def crossover(self, selected, n_crossover):
     crossover_pool = []
     if len(selected) < 2:
       return np.empty((0, self.dim), dtype=int)
-
     for _ in range(n_crossover // 2):
       offspring1, offspring2 = selected[np.random.randint(0, len(selected), size=2)]
       for pos in range(self.dim):
@@ -140,12 +131,10 @@ class GeneticAlgorithmKnapsack:
         crossover_pool.append(offspring2)
     return np.array(crossover_pool)
 
-  # --- Mutation ---
   def mutation(self, selected, n_mutation):
     mutated = []
     if len(selected) < 1:
       return np.empty((0, self.dim), dtype=int)
-
     for _ in range(n_mutation):
       child = selected[np.random.randint(0, len(selected))].copy()  
       for pos in range(self.dim):
@@ -155,7 +144,6 @@ class GeneticAlgorithmKnapsack:
         mutated.append(child)
     return np.array(mutated)
 
-  # --- Main Loop ---
   def run(self):
     best_fitness = 0
     best_solution = np.empty((0, self.dim), dtype=int)
@@ -169,12 +157,10 @@ class GeneticAlgorithmKnapsack:
         remaining = self.population_size - len(new_population)
         n_selection = max(int(remaining * 0.4), 2)
         n_crossover = max(int(remaining * 0.4), 1)
-
         selected = self.selection(n_selection)
         crossed = self.crossover(selected, n_crossover)
         n_mutation = max(remaining - len(crossed), 1)
         mutated = self.mutation(selected, n_mutation)
-
         combined = np.concatenate((selected, crossed, mutated), axis=0)
         new_population = np.concatenate((new_population, combined), axis=0)
 
@@ -186,8 +172,10 @@ class GeneticAlgorithmKnapsack:
         best_fitness = new_best_fitness
         best_solution = self.population[0]
 
-      hist.append(best_fitness)
+      self.history.append(best_fitness)
+
       if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
         print(f"Iteration {t+1}/{self.max_iter}: best fitness = {best_fitness:.2f}")
 
-    return best_solution, best_fitness, hist
+    return best_solution, best_fitness, self.history
+
