@@ -28,6 +28,20 @@ class HillClimbing:
         self.best_fitness = None
         self.history = []
 
+    def generate_neighbors(self, solution):
+        step = (self.upper_bound - self.lower_bound) * 0.1
+        perturbations = np.random.uniform(
+            -step,
+            step,
+            size=(self.n_neighbors, self.dim)
+        )
+        neighbors = np.clip(
+            solution + perturbations,
+            self.lower_bound,
+            self.upper_bound
+        )
+        return neighbors
+
     def run(self):
         if self.verbose:
             print("\n===== Start HC =====")
@@ -40,19 +54,9 @@ class HillClimbing:
         self.best_solution = current_solution.copy()
         self.best_fitness = current_fitness
         self.history = [current_fitness]
-        step = (self.upper_bound - self.lower_bound) * 0.1
 
         for iteration in range(self.max_iter):
-            perturbations = np.random.uniform(
-                -step,
-                step,
-                size=(self.n_neighbors, self.dim)
-            )
-            neighbors = np.clip(
-                current_solution + perturbations,
-                self.lower_bound,
-                self.upper_bound
-            )
+            neighbors = self.generate_neighbors(current_solution)
             fitness_values = np.apply_along_axis(self.fitness_func, 1, neighbors)
             best_idx = np.argmin(fitness_values)
             best_neighbor = neighbors[best_idx]
@@ -63,8 +67,6 @@ class HillClimbing:
                 current_fitness = best_neighbor_fitness
                 self.best_solution = current_solution.copy()
                 self.best_fitness = current_fitness
-            else:
-                break
 
             self.history.append(self.best_fitness)
             if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
@@ -111,16 +113,23 @@ class HillClimbingKnapsack:
     def is_valid(self, solution):
         return np.sum(solution * self.weights) <= self.capacity
 
+    def repair(self, sol):
+        while not self.is_valid(sol):
+            ones = np.where(sol == 1)[0]
+            if len(ones) == 0:
+                break
+            sol[np.random.choice(ones)] = 0
+        return sol
+
     def generate_neighbors(self, solution):
         neighbors = []
         for _ in range(self.n_neighbors):
-            while True:
-                neighbor = solution.copy()
-                i = np.random.randint(0, self.dim)
-                neighbor[i] = 1 - neighbor[i]
-                if self.is_valid(neighbor):
-                    neighbors.append(neighbor)
-                    break
+            neighbor = solution.copy()
+            i = np.random.randint(0, self.dim)
+            neighbor[i] = 1 - neighbor[i]
+            if not self.is_valid(neighbor):
+                neighbor = self.repair(neighbor)
+            neighbors.append(neighbor)
         return neighbors
 
     def run(self):
@@ -145,8 +154,6 @@ class HillClimbingKnapsack:
             if best_neighbor_fitness > self.best_fitness:
                 self.best_solution = best_neighbor.copy()
                 self.best_fitness = best_neighbor_fitness
-            else:
-                break
 
             self.history.append(self.best_fitness)
             if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):

@@ -194,7 +194,7 @@ def plot_convergence_individual(results_dict, problem_type='sphere', save_dir='s
         
         # Use nice tick step to get clean, readable ticks (max 5-6 ticks)
         data_range = y_max - y_min
-        tick_step = get_nice_tick_step(data_range, max_ticks=5)
+        tick_step = get_nice_tick_step(data_range, max_ticks=10)
         y_min_tick = np.floor(y_min / tick_step) * tick_step
         y_max_tick = np.ceil(y_max / tick_step) * tick_step
         y_ticks = np.arange(y_min_tick, y_max_tick + tick_step, tick_step)
@@ -241,7 +241,7 @@ def plot_convergence_combined(results_dict, problem_type='sphere', save_path=Non
     
     # Use nice tick step to get clean, readable ticks (max 5-6 ticks)
     data_range = y_max - y_min
-    tick_step = get_nice_tick_step(data_range, max_ticks=5)
+    tick_step = get_nice_tick_step(data_range, max_ticks=10)
     y_min_tick = np.floor(y_min / tick_step) * tick_step
     y_max_tick = np.ceil(y_max / tick_step) * tick_step
     y_ticks = np.arange(y_min_tick, y_max_tick + tick_step, tick_step)
@@ -284,7 +284,7 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
     # 1. Number of ticks would be reasonable (<= 15) with normal axis, OR
     # 2. There's a truly large gap (> 30% of range) that creates visual issues
     gap_percentage = (max_gap / data_range * 100) if data_range > 0 else 0
-    use_broken_axis = (num_ticks > 15) or (gap_percentage > 30 and data_range > 0.1)
+    use_broken_axis = (num_ticks > 50) or (gap_percentage > 60 and data_range > 0.1)
     
     if use_broken_axis:
         fig, (ax1, ax2) = plt.subplots(
@@ -449,7 +449,7 @@ def plot_memory_bar(results_dict, problem_type='sphere', save_path=None):
     # 1. Number of ticks would be unreasonable (> 15) with normal axis, OR
     # 2. There's a truly large gap (> 30% of range) that creates visual issues
     gap_percentage = (max_gap / data_range * 100) if data_range > 0 else 0
-    use_broken_axis = (num_ticks > 20) or (gap_percentage > 30 and data_range > 5)
+    use_broken_axis = (num_ticks > 50) or (gap_percentage > 60 and data_range > 5)
     
     if use_broken_axis:
         fig, (ax1, ax2) = plt.subplots(

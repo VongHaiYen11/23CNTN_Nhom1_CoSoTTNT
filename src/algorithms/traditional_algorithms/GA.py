@@ -125,8 +125,6 @@ class GeneticAlgorithmKnapsack:
         population_size=20,
         max_iter=1000,
         elitism=2,
-        alpha=0.6,
-        sigma=0.1,
         mutation_rate=0.1,
         crossover_rate=0.8,
         seed=None,
@@ -142,8 +140,6 @@ class GeneticAlgorithmKnapsack:
         self.population_size = population_size
         self.max_iter = max_iter
         self.elitism = elitism
-        self.alpha = alpha
-        self.sigma = sigma
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
         self.verbose = verbose
