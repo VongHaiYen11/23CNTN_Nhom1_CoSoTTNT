@@ -1,6 +1,9 @@
 import numpy as np
 import time
+import os
 import pandas as pd
+import sys
+import random
 
 from src.algorithms.swarm_algorithms.ABC import ArtificialBeeColonyKnapsack
 from src.algorithms.swarm_algorithms.FA import FireflyKnapsack
@@ -12,12 +15,114 @@ from src.algorithms.traditional_algorithms.HC import HillClimbingKnapsack
 from src.algorithms.traditional_algorithms.SA import SimulatedAnnealingKnapsack
 from src.problem.discrete.knapsack import WEIGHTS, VALUES, MAX_WEIGHT, N_ITEMS
 
-POP_SIZE = 10
-MAX_ITER = 200
+N_RUNS = 1
+POP_SIZES = [10]
+MAX_ITERATIONS = 200
 SEED = 42
 VERBOSE = False
 
-results = {}
+ALGOS = ['ABC', 'FA', 'Cuckoo', 'PSO', 'ACO', 'HC', 'SA', 'GA']
+
+
+def measure_space_usage(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.nbytes + sys.getsizeof(obj)
+    elif isinstance(obj, list):
+        return sys.getsizeof(obj) + sum(measure_space_usage(o) for o in obj)
+    return sys.getsizeof(obj)
+
+
+def create_algorithm(algo_name, pop_size, seed):
+    if algo_name == 'ABC':
+        return ArtificialBeeColonyKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            max_weight=MAX_WEIGHT,
+            dim=N_ITEMS,
+            num_employed_bees=pop_size,
+            num_onlooker_bees=pop_size,
+            max_iter=MAX_ITERATIONS,
+            limit=30,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'FA':
+        return FireflyKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            max_weight=MAX_WEIGHT,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'Cuckoo':
+        return CuckooSearchKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            dim=N_ITEMS,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'PSO':
+        return ParitcleSwarmKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            dim=N_ITEMS,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'ACO':
+        return AntColonyOptimizationKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            n_ants=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'HC':
+        return HillClimbingKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            dim=N_ITEMS,
+            max_iter=MAX_ITERATIONS,
+            n_neighbors=pop_size,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'SA':
+        return SimulatedAnnealingKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            dim=N_ITEMS,
+            max_iter=MAX_ITERATIONS,
+            step_size=0.5,
+            initial_temp=100,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    elif algo_name == 'GA':
+        return GeneticAlgorithmKnapsack(
+            weights=WEIGHTS,
+            values=VALUES,
+            capacity=MAX_WEIGHT,
+            population_size=pop_size,
+            max_iter=MAX_ITERATIONS,
+            seed=seed,
+            verbose=VERBOSE
+        )
+    else:
+        raise ValueError(f"Unknown algorithm: {algo_name}")
 
 
 def compute_solution_metrics(solution):
@@ -29,40 +134,37 @@ def compute_solution_metrics(solution):
     }
 
 
-def run_algorithm_and_store(name, algorithm, print_name=None):
-    if print_name:
-        print(f"\n--- {print_name} ---")
+def run_algorithm(algo_name, pop_size, seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    start_time = time.time()
     
-    start = time.time()
-    solution, fitness, history = algorithm.run()
-    elapsed = time.time() - start
+    algorithm = create_algorithm(algo_name, pop_size, seed)
+    result = algorithm.run()
     
+    solution, fitness, hist = result
     metrics = compute_solution_metrics(solution)
-    results[name] = {
+    
+    elapsed = time.time() - start_time
+    space = measure_space_usage(solution)
+    
+    return {
         'value': metrics['value'],
         'weight': metrics['weight'],
-        'binary': metrics['binary'],
-        'time': elapsed
+        'solution': ''.join(map(str, metrics['binary'])),
+        'elapsed': elapsed,
+        'space': space
     }
 
 
-def print_results(results_dict):
-    rows = []
-    for algo_name, res in results_dict.items():
-        rows.append({
-            'Algorithm': algo_name,
-            'Value': res['value'],
-            'Weight': res['weight'],
-            'Time (s)': res.get('time', 0),
-            'Solution': ''.join(map(str, res['binary']))
-        })
+def print_results(results_list):
+    df = pd.DataFrame(results_list)
+    df = df.sort_values(by='Mean Value', ascending=False).reset_index(drop=True)
     
-    df = pd.DataFrame(rows)
-    df = df.sort_values(by='Value', ascending=False).reset_index(drop=True)
-    
-    df['Value'] = df['Value'].apply(lambda x: f"{x:.2f}")
-    df['Weight'] = df['Weight'].apply(lambda x: f"{x:.2f}")
-    df['Time (s)'] = df['Time (s)'].apply(lambda x: f"{x:.4f}")
+    df['Mean Value'] = df['Mean Value'].apply(lambda x: f"{x:.2f}")
+    df['Mean Weight'] = df['Mean Weight'].apply(lambda x: f"{x:.2f}")
+    df['Mean Time (s)'] = df['Mean Time (s)'].apply(lambda x: f"{x:.4f}")
+    df['Mean Space (bytes)'] = df['Mean Space (bytes)'].apply(lambda x: f"{x:,.0f}")
     
     print("\n" + "=" * 100)
     print(" " * 32 + "Knapsack Optimization Results")
@@ -70,14 +172,15 @@ def print_results(results_dict):
     
     col_widths = {
         'Algorithm': 15,
-        'Value': 12,
-        'Weight': 12,
-        'Time (s)': 12,
+        'Mean Value': 12,
+        'Mean Weight': 12,
+        'Mean Time (s)': 12,
+        'Mean Space (bytes)': 20,
         'Solution': 30
     }
     
-    header = f"| {'Algorithm':<{col_widths['Algorithm']}} | {'Value':<{col_widths['Value']}} | {'Weight':<{col_widths['Weight']}} | {'Time (s)':<{col_widths['Time (s)']}} | {'Solution':<{col_widths['Solution']}} |"
-    separator = "|" + "-" * (col_widths['Algorithm'] + 2) + "|" + "-" * (col_widths['Value'] + 2) + "|" + "-" * (col_widths['Weight'] + 2) + "|" + "-" * (col_widths['Time (s)'] + 2) + "|" + "-" * (col_widths['Solution'] + 2) + "|"
+    header = f"| {'Algorithm':<{col_widths['Algorithm']}} | {'Mean Value':<{col_widths['Mean Value']}} | {'Mean Weight':<{col_widths['Mean Weight']}} | {'Mean Time (s)':<{col_widths['Mean Time (s)']}} | {'Mean Space (bytes)':<{col_widths['Mean Space (bytes)']}} | {'Solution':<{col_widths['Solution']}} |"
+    separator = "|" + "-" * (col_widths['Algorithm'] + 2) + "|" + "-" * (col_widths['Mean Value'] + 2) + "|" + "-" * (col_widths['Mean Weight'] + 2) + "|" + "-" * (col_widths['Mean Time (s)'] + 2) + "|" + "-" * (col_widths['Mean Space (bytes)'] + 2) + "|" + "-" * (col_widths['Solution'] + 2) + "|"
     
     print(header)
     print(separator)
@@ -86,134 +189,47 @@ def print_results(results_dict):
         solution_str = str(row['Solution'])
         if len(solution_str) > col_widths['Solution']:
             solution_str = solution_str[:col_widths['Solution']-3] + "..."
-        line = f"| {str(row['Algorithm']):<{col_widths['Algorithm']}} | {str(row['Value']):<{col_widths['Value']}} | {str(row['Weight']):<{col_widths['Weight']}} | {str(row['Time (s)']):<{col_widths['Time (s)']}} | {solution_str:<{col_widths['Solution']}} |"
+        line = f"| {str(row['Algorithm']):<{col_widths['Algorithm']}} | {str(row['Mean Value']):<{col_widths['Mean Value']}} | {str(row['Mean Weight']):<{col_widths['Mean Weight']}} | {str(row['Mean Time (s)']):<{col_widths['Mean Time (s)']}} | {str(row['Mean Space (bytes)']):<{col_widths['Mean Space (bytes)']}} | {solution_str:<{col_widths['Solution']}} |"
         print(line)
     
     print("=" * 100)
     print()
 
 
-def run_knapsack():
-    print("\n--- Running Experiments - Knapsack Problem ---")
-    print(f"Pop Size = {POP_SIZE}, Max Iterations = {MAX_ITER}, Items = {N_ITEMS}\n")
+def run_experiments():
+    os.makedirs("results", exist_ok=True)
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
     
-    run_algorithm_and_store(
-        'ABC',
-        ArtificialBeeColonyKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            max_weight=MAX_WEIGHT,
-            dim=N_ITEMS,
-            num_employed_bees=POP_SIZE,
-            num_onlooker_bees=POP_SIZE,
-            max_iter=MAX_ITER * 5,
-            limit=30,
-            seed=SEED,
-            verbose=VERBOSE
-        )
-    )
+    results = []
+    print("\n--- Running Experiments ---")
     
-    run_algorithm_and_store(
-        'FA',
-        FireflyKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            max_weight=MAX_WEIGHT,
-            population_size=POP_SIZE,
-            max_iter=MAX_ITER * 5,
-            seed=SEED,
-            verbose=VERBOSE
-        )
-    )
+    for algo in ALGOS:
+        values, weights, solutions, times, spaces = [], [], [], [], []
+        
+        for pop in POP_SIZES:
+            for _ in range(N_RUNS):
+                seed = random.randint(0, SEED)
+                res = run_algorithm(algo, pop, seed)
+                values.append(res['value'])
+                weights.append(res['weight'])
+                solutions.append(res['solution'])
+                times.append(res['elapsed'])
+                spaces.append(res['space'])
+        
+        results.append({
+            "Algorithm": algo,
+            'Mean Value': np.mean(values),
+            'Mean Weight': np.mean(weights),
+            'Solution': solutions[0] if solutions else '',
+            'Mean Time (s)': np.mean(times),
+            'Mean Space (bytes)': np.mean(spaces)
+        })
     
-    run_algorithm_and_store(
-        'CS',
-        CuckooSearchKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            dim=N_ITEMS,
-            population_size=POP_SIZE,
-            max_iter=MAX_ITER * 5,
-            seed=SEED,
-            verbose=VERBOSE
-        ),
-        print_name="Cuckoo Search"
-    )
-    
-    run_algorithm_and_store(
-        'PSO',
-        ParitcleSwarmKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            dim=N_ITEMS,
-            population_size=POP_SIZE,
-            max_iter=MAX_ITER,
-            seed=SEED,
-            verbose=VERBOSE
-        )
-    )
-    
-    run_algorithm_and_store(
-        'ACO',
-        AntColonyOptimizationKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            n_ants=POP_SIZE,
-            max_iter=MAX_ITER,
-            seed=SEED,
-            verbose=VERBOSE
-        )
-    )
-    
-    run_algorithm_and_store(
-        'HC',
-        HillClimbingKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            dim=N_ITEMS,
-            max_iter=MAX_ITER,
-            n_neighbors=POP_SIZE,
-            seed=SEED,
-            verbose=VERBOSE
-        ),
-        print_name="Hill Climbing"
-    )
-    
-    run_algorithm_and_store(
-        'SA',
-        SimulatedAnnealingKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            dim=N_ITEMS,
-            max_iter=MAX_ITER * 2,
-            step_size=0.5,
-            initial_temp=100,
-            seed=SEED,
-            verbose=VERBOSE
-        ),
-        print_name="Simulated Annealing"
-    )
-    
-    run_algorithm_and_store(
-        'GA',
-        GeneticAlgorithmKnapsack(
-            weights=WEIGHTS,
-            values=VALUES,
-            capacity=MAX_WEIGHT,
-            population_size=POP_SIZE,
-            max_iter=MAX_ITER,
-            seed=SEED,
-            verbose=VERBOSE
-        ),
-        print_name="Genetic Algorithm"
-    )
+    print_results(results)
+    pd.DataFrame(results).to_csv(f"results/resultsKnapsack_{timestamp}.csv", index=False)
+    print("Result CSV saved!")
+    print("\nFinish")
 
 
 if __name__ == "__main__":
-    run_knapsack()
-    print_results(results)
+    run_experiments()
