@@ -18,7 +18,7 @@ from src.problem.continuous.sphere import sphere
 N_RUNS = 1
 DIMS = [30]
 POP_SIZES = [50]
-MAX_ITERATIONS = 500
+MAX_ITERATIONS = 250
 LOWER_BOUND = -5.12
 UPPER_BOUND = 5.12
 SEED = 42

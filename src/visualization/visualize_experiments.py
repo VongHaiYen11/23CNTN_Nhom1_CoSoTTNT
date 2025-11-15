@@ -189,18 +189,15 @@ def plot_convergence_individual(results_dict, problem_type='sphere', save_dir='s
         y_max = max_fitness + y_padding
         y_min = max(0, min_fitness - y_padding)
         
-        # Set y-axis limits and ticks
+        # Set y-axis limits and ticks with less detailed spacing
         ax.set_ylim(y_min, y_max)
         
-        if problem_type == 'knapsack':
-            # Less detailed ticks for knapsack (larger steps)
-            step = max(10, int((y_max - y_min) / 5))
-            y_ticks = np.arange(0, int(y_max) + step, step)
-        else:
-            # More detailed ticks for sphere (smaller steps)
-            step = max(1, int((y_max - y_min) / 10))
-            y_ticks = np.arange(0, int(y_max) + step, step)
-        
+        # Use nice tick step to get clean, readable ticks (max 5-6 ticks)
+        data_range = y_max - y_min
+        tick_step = get_nice_tick_step(data_range, max_ticks=5)
+        y_min_tick = np.floor(y_min / tick_step) * tick_step
+        y_max_tick = np.ceil(y_max / tick_step) * tick_step
+        y_ticks = np.arange(y_min_tick, y_max_tick + tick_step, tick_step)
         ax.set_yticks(y_ticks)
         
         ax.legend(loc='upper right', fontsize=11)
@@ -242,15 +239,12 @@ def plot_convergence_combined(results_dict, problem_type='sphere', save_path=Non
     
     ax.set_ylim(y_min, y_max)
     
-    if problem_type == 'knapsack':
-        # Less detailed ticks for knapsack (larger steps)
-        step = max(10, int((y_max - y_min) / 5))
-        y_ticks = np.arange(0, int(y_max) + step, step)
-    else:
-        # More detailed ticks for sphere (smaller steps)
-        step = max(1, int((y_max - y_min) / 10))
-        y_ticks = np.arange(0, int(y_max) + step, step)
-    
+    # Use nice tick step to get clean, readable ticks (max 5-6 ticks)
+    data_range = y_max - y_min
+    tick_step = get_nice_tick_step(data_range, max_ticks=5)
+    y_min_tick = np.floor(y_min / tick_step) * tick_step
+    y_max_tick = np.ceil(y_max / tick_step) * tick_step
+    y_ticks = np.arange(y_min_tick, y_max_tick + tick_step, tick_step)
     ax.set_yticks(y_ticks)
     
     ax.legend(loc='upper right', fontsize=11, framealpha=0.9, ncol=2)
@@ -276,7 +270,7 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
     data_range = max_runtime - min_runtime
     
     # Calculate nice tick step
-    tick_step = get_nice_tick_step(data_range, max_ticks=20)
+    tick_step = get_nice_tick_step(data_range, max_ticks=10)
     
     # Calculate how many ticks would appear with this step
     num_ticks = int(np.ceil(data_range / tick_step)) + 1
@@ -286,8 +280,11 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
     gaps = [sorted_runtimes[i+1] - sorted_runtimes[i] for i in range(len(sorted_runtimes)-1)]
     max_gap = max(gaps) if len(gaps) > 0 else 0
     
+    # Use broken axis only if:
+    # 1. Number of ticks would be reasonable (<= 15) with normal axis, OR
+    # 2. There's a truly large gap (> 30% of range) that creates visual issues
     gap_percentage = (max_gap / data_range * 100) if data_range > 0 else 0
-    use_broken_axis = (num_ticks > 30) 
+    use_broken_axis = (num_ticks > 15) or (gap_percentage > 30 and data_range > 0.1)
     
     if use_broken_axis:
         fig, (ax1, ax2) = plt.subplots(
@@ -314,8 +311,8 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
         lower_values = [v for v in runtimes if v < upper_min]
         
         if len(upper_values) > 0 and len(lower_values) > 0:
-            upper_max = max(upper_values) * 1.20
-            lower_max = max(lower_values) * 1.25
+            upper_max = max(upper_values) * 1.15
+            lower_max = max(lower_values) * 1.2
             
             # Top subplot: show upper portion (from upper_min to value) for high values
             upper_indices = [i for i, v in enumerate(runtimes) if v >= upper_min]
@@ -406,16 +403,11 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
         ax.set_xticks(x)
         ax.set_xticklabels(algorithms)
         
-        # Set adaptive y-axis ticks with increased padding
-        tick_step = get_nice_tick_step(data_range, max_ticks=20)
+        # Set adaptive y-axis ticks
+        tick_step = get_nice_tick_step(data_range, max_ticks=10)
         y_min = np.floor(min_runtime / tick_step) * tick_step
         y_max = np.ceil(max_runtime / tick_step) * tick_step
-        # Add padding: 5% at bottom, 10% at top
-        padding_bottom = (y_max - y_min) * 0.05
-        padding_top = (y_max - y_min) * 0.10
-        y_min = max(0, y_min - padding_bottom)
-        y_max = y_max + padding_top
-        y_ticks = np.arange(np.floor(y_min / tick_step) * tick_step, y_max + tick_step, tick_step)
+        y_ticks = np.arange(y_min, y_max + tick_step, tick_step)
         ax.set_yticks(y_ticks)
         ax.set_ylim(y_min, y_max)
         
@@ -443,7 +435,7 @@ def plot_memory_bar(results_dict, problem_type='sphere', save_path=None):
     data_range = max_memory - min_memory
     
     # Calculate nice tick step
-    tick_step = get_nice_tick_step(data_range, max_ticks=20)
+    tick_step = get_nice_tick_step(data_range, max_ticks=10)
     
     # Calculate how many ticks would appear with this step
     num_ticks = int(np.ceil(data_range / tick_step)) + 1
@@ -457,7 +449,7 @@ def plot_memory_bar(results_dict, problem_type='sphere', save_path=None):
     # 1. Number of ticks would be unreasonable (> 15) with normal axis, OR
     # 2. There's a truly large gap (> 30% of range) that creates visual issues
     gap_percentage = (max_gap / data_range * 100) if data_range > 0 else 0
-    use_broken_axis = (num_ticks > 30) or (gap_percentage > 30 and data_range > 5)
+    use_broken_axis = (num_ticks > 20) or (gap_percentage > 30 and data_range > 5)
     
     if use_broken_axis:
         fig, (ax1, ax2) = plt.subplots(
@@ -485,8 +477,8 @@ def plot_memory_bar(results_dict, problem_type='sphere', save_path=None):
         lower_values = [v for v in memories if v < upper_min]
         
         if len(upper_values) > 0 and len(lower_values) > 0:
-            upper_max = max(upper_values) * 1.20
-            lower_max = max(lower_values) * 1.25
+            upper_max = max(upper_values) * 1.15
+            lower_max = max(lower_values) * 1.2
             
             # Top subplot: show upper portion (from upper_min to value) for high values
             upper_indices = [i for i, v in enumerate(memories) if v >= upper_min]
@@ -577,16 +569,11 @@ def plot_memory_bar(results_dict, problem_type='sphere', save_path=None):
         ax.set_xticks(x)
         ax.set_xticklabels(algorithms)
         
-        # Set adaptive y-axis ticks with increased padding
+        # Set adaptive y-axis ticks
         tick_step = get_nice_tick_step(data_range, max_ticks=10)
         y_min = np.floor(min_memory / tick_step) * tick_step
         y_max = np.ceil(max_memory / tick_step) * tick_step
-        # Add padding: 5% at bottom, 10% at top
-        padding_bottom = (y_max - y_min) * 0.05
-        padding_top = (y_max - y_min) * 0.10
-        y_min = max(0, y_min - padding_bottom)
-        y_max = y_max + padding_top
-        y_ticks = np.arange(np.floor(y_min / tick_step) * tick_step, y_max + tick_step, tick_step)
+        y_ticks = np.arange(y_min, y_max + tick_step, tick_step)
         ax.set_yticks(y_ticks)
         ax.set_ylim(y_min, y_max)
         
