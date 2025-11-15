@@ -69,7 +69,7 @@ class HillClimbing:
                 print(f"Iteration {iteration+1}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (Hill Climbing) ---")
+            print("\n--- Optimization Results (HC) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -149,7 +149,7 @@ class HillClimbingKnapsack:
                 print(f"Iteration {iteration+1}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (Hill Climbing Knapsack) ---")
+            print("\n--- Optimization Results (HC Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

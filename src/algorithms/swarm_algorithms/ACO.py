@@ -102,7 +102,7 @@ class AntColonyOptimizationContinuous:
                 print(f"Iter {it+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (ACO Continuous) ---")
+            print("\n--- Optimization Results (ACO) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -217,9 +217,9 @@ class AntColonyOptimizationKnapsack:
                 print(f"Iter {it}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n=== Final Result (ACO-Knapsack) ===")
-            print(f"Best solution: {self.best_solution}")
-            print(f"Total value: {self.best_fitness:.2f}")
-            print(f"Total weight: {np.sum(self.best_solution * self.weights):.2f}")
+            print("\n--- Optimization Results (ACO Knapsack) ---")
+            print(f"Best Solution: {self.best_solution}")
+            print(f"Total Value: {self.best_fitness:.2f}")
+            print(f"Total Weight: {np.sum(self.best_solution * self.weights):.2f}")
 
         return self.best_solution, self.best_fitness, self.history

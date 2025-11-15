@@ -75,7 +75,7 @@ class SimulatedAnnealing:
                 print(f"Iteration {i}: Temp={temp:.4f}, Best fitness={self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (SimulatedAnnealing) ---")
+            print("\n--- Optimization Results (SA) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -162,7 +162,7 @@ class SimulatedAnnealingKnapsack:
                 print(f"Iteration {iteration}: Temp={temp:.4f}, Best fitness={self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (SimulatedAnnealingKnapsack) ---")
+            print("\n--- Optimization Results (SA Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

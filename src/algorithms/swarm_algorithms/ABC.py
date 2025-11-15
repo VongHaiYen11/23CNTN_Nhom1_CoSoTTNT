@@ -194,7 +194,7 @@ class ArtificialBeeColony:
                 print(f"Iteration {iteration+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results ABC ---")
+            print("\n--- Optimization Results (ABC) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -378,7 +378,7 @@ class ArtificialBeeColonyKnapsack:
         best_items = np.where(self.best_solution == 1)[0]
 
         if self.verbose:
-            print("\n--- ABC Knapsack Results ---")
+            print("\n--- Optimization Results (ABC Knapsack) ---")
             print(f"Best Value: {self.best_fitness:.2f}")
             print(f"Selected Items: {best_items.tolist()}")
             print(f"Total Weight: {np.dot(self.best_solution, self.weights):.2f}/{self.max_weight:.2f}")

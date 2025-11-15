@@ -99,7 +99,7 @@ class CuckooSearch:
             t += 1
 
         if self.verbose:
-            print("\n--- Optimization Results (Cuckoo Search) ---")
+            print("\n--- Optimization Results (Cuckoo) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -224,7 +224,7 @@ class CuckooSearchKnapsack:
                 print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (Cuckoo Search Knapsack) ---")
+            print("\n--- Optimization Results (Cuckoo Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

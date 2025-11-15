@@ -108,7 +108,7 @@ class GeneticAlgorithmContinuous:
 
         self.best_solution = self.population[0]
         if self.verbose:
-            print("\n--- Optimization Results (GA Continuous) ---")
+            print("\n--- Optimization Results (GA) ---")
             print(f"Best Fitness: {self.fitness_func(self.best_solution):.6f}")
             print(f"Best Solution: {self.best_solution}")
         return self.best_solution, self.fitness_func(self.best_solution), self.history, self.population
