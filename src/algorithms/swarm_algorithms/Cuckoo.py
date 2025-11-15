@@ -1,10 +1,22 @@
 import numpy as np
 import math
 
+
 class CuckooSearch:
-    def __init__(self, fitness_func, lower_bound, upper_bound, dim=1,
-                 population_size=25, pa=0.25, alpha=0.01, beta=1.5,
-                 max_iter=1000, seed=None, verbose=False):
+    def __init__(
+        self,
+        fitness_func,
+        lower_bound,
+        upper_bound,
+        dim=1,
+        population_size=25,
+        pa=0.25,
+        alpha=0.01,
+        beta=1.5,
+        max_iter=1000,
+        seed=None,
+        verbose=False
+    ):
         if seed is not None:
             np.random.seed(seed)
 
@@ -18,12 +30,17 @@ class CuckooSearch:
         self.beta = beta
         self.max_iter = max_iter
         self.verbose = verbose
+
+        self.best_solution = None
+        self.best_fitness = None
         self.history = []
 
     def levy_flight(self, size):
         beta = self.beta
-        sigma = (math.gamma(1 + beta) * math.sin(math.pi * beta / 2) /
-                 (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))) ** (1 / beta)
+        sigma = (
+            (math.gamma(1 + beta) * math.sin(math.pi * beta / 2))
+            / (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))
+        ) ** (1 / beta)
         u = np.random.normal(0, sigma, size)
         v = np.random.normal(0, 1, size)
         return u / (np.abs(v) ** (1 / beta))
@@ -51,36 +68,59 @@ class CuckooSearch:
         stepsize = self.alpha * steps * (nests - best)
         new_nests = nests + stepsize * np.random.randn(n, self.dim)
         return np.clip(new_nests, self.lower_bound, self.upper_bound)
-    
+
     def run(self):
         n = self.population_size
-        hist = []
-        nests = np.random.uniform(self.lower_bound, self.upper_bound, (n, self.dim))
+        nests = np.random.uniform(
+            self.lower_bound,
+            self.upper_bound,
+            (n, self.dim)
+        )
         fitness = np.array([self.fitness_func(x) for x in nests])
         best_idx = np.argmin(fitness)
-        best = nests[best_idx].copy()
-        fmin = fitness[best_idx]
+        self.best_solution = nests[best_idx].copy()
+        self.best_fitness = fitness[best_idx]
+        self.history = [self.best_fitness]
         t = 0
         while t < self.max_iter:
-            new_nests = self.get_cuckoos(nests, best)
+            new_nests = self.get_cuckoos(nests, self.best_solution)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
+            self.best_solution = best.copy()
+            self.best_fitness = fmin
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmin = self.get_best_nest(nests, new_nests, fitness)
+            self.best_solution = best.copy()
+            self.best_fitness = fmin
+            self.history.append(self.best_fitness)
 
             if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {fmin:.6f}")
+                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
             t += 1
 
-        return best, fmin
+        if self.verbose:
+            print("\n--- Optimization Results (Cuckoo Search) ---")
+            print(f"Best Fitness: {self.best_fitness:.6f}")
+            print(f"Best Solution: {self.best_solution}")
 
-import numpy as np
-import math
+        return self.best_solution, self.best_fitness
+
 
 class CuckooSearchKnapsack:
-    def __init__(self, weights, values, capacity, dim=None,
-                 population_size=25, pa=0.25, alpha=0.01, beta=1.5,
-                 max_iter=1000, seed=None, verbose=True):
+    def __init__(
+        self,
+        weights,
+        values,
+        capacity,
+        dim=None,
+        population_size=25,
+        pa=0.25,
+        alpha=0.01,
+        beta=1.5,
+        max_iter=1000,
+        seed=None,
+        verbose=True
+    ):
         if seed is not None:
             np.random.seed(seed)
 
@@ -94,6 +134,9 @@ class CuckooSearchKnapsack:
         self.beta = beta
         self.max_iter = max_iter
         self.verbose = verbose
+
+        self.best_solution = None
+        self.best_fitness = 0
         self.history = []
 
     def fitness(self, solution):
@@ -113,18 +156,25 @@ class CuckooSearchKnapsack:
 
     def levy_flight(self, size):
         beta = self.beta
-        sigma = (math.gamma(1 + beta) * math.sin(math.pi * beta / 2) /
-                 (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))) ** (1 / beta)
+        sigma = (
+            (math.gamma(1 + beta) * math.sin(math.pi * beta / 2))
+            / (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))
+        ) ** (1 / beta)
         u = np.random.normal(0, sigma, size)
         v = np.random.normal(0, 1, size)
         return u / (np.abs(v) ** (1 / beta))
 
+    def repair(self, sol):
+        while not self.is_valid(sol):
+            ones = np.where(sol == 1)[0]
+            if len(ones) == 0:
+                break
+            sol[np.random.choice(ones)] = 0
+        return sol
+
     def sigmoid_solution(self, x):
         s = 1 / (1 + np.exp(-x))
         sol = (s > 0.5).astype(int)
-        while not self.is_valid(sol):
-            ones = np.where(sol == 1)[0]
-            sol[np.random.choice(ones)] = 0
         return sol
 
     def get_best_nest(self, nests, new_nests, fitness):
@@ -149,55 +199,33 @@ class CuckooSearchKnapsack:
         steps = self.levy_flight((n, self.dim))
         stepsize = self.alpha * steps * (nests - best)
         new_nests = nests + stepsize * np.random.randn(n, self.dim)
-        new_nests = np.array([self.sigmoid_solution(x) for x in new_nests])
+        new_nests = np.array([self.repair(self.sigmoid_solution(x)) for x in new_nests])
         return new_nests
 
     def run(self):
         nests = self.initialize_population()
         fitness = np.array([self.fitness(x) for x in nests])
         best_idx = np.argmax(fitness)
-        best = nests[best_idx].copy()
-        fmax = fitness[best_idx]
-
+        self.best_solution = nests[best_idx].copy()
+        self.best_fitness = fitness[best_idx]
+        self.history = [self.best_fitness]
         for t in range(1, self.max_iter + 1):
-            new_nests = self.get_cuckoos(nests, best)
+            new_nests = self.get_cuckoos(nests, self.best_solution)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
-
-            # if self.verbose:
-            #     print("Empty Eggs Phase:")
-
-            # Empty nest phase
+            self.best_solution = best.copy()
+            self.best_fitness = fmax
             new_nests = self.empty_nests(nests)
             nests, fitness, best, fmax = self.get_best_nest(nests, new_nests, fitness)
+            self.best_solution = best.copy()
+            self.best_fitness = fmax
+            self.history.append(self.best_fitness)
 
-        return best
+            if self.verbose and (t % 50 == 0 or t == self.max_iter):
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
-if __name__ == "__main__":
-    # Ví dụ nhỏ Knapsack
-    weights = [2, 3, 4, 5, 9, 7, 1, 6, 8, 3]
-    values =  [3, 4, 5, 8, 10, 6, 2, 7, 9, 5]
-    capacity = 20
+        if self.verbose:
+            print("\n--- Optimization Results (Cuckoo Search Knapsack) ---")
+            print(f"Best Fitness: {self.best_fitness:.2f}")
+            print(f"Best Solution: {self.best_solution}")
 
-    # Khởi tạo Cuckoo Search cho Knapsack
-    cs_knapsack = CuckooSearchKnapsack(
-        weights=weights,
-        values=values,
-        capacity=capacity,
-        population_size=5,  # nhỏ để debug dễ
-        max_iter=10,        # ít vòng lặp để test nhanh
-        alpha=0.01,
-        pa=0.25,
-        beta=1.5,
-        verbose=True,        # in debug mỗi 50 iteration
-        seed=42
-    )
-
-    best_solution, best_fitness = cs_knapsack.run()
-
-    # In kết quả cuối
-    selected_items = np.where(best_solution == 1)[0]
-    print("\n=== Final Result ===")
-    print(f"Best solution: {best_solution}")
-    print(f"Selected items: {selected_items}")
-    print(f"Total weight: {np.sum(np.array(weights)[selected_items])}")
-    print(f"Total value: {best_fitness}")
+        return self.best_solution, self.best_fitness, self.history

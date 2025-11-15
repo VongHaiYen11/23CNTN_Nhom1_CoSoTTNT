@@ -1,16 +1,25 @@
 import numpy as np
 
+
 class ParticleSwarmOptimization:
-    def __init__(self, objective_function, lower_bound, upper_bound, dim,
-                 population_size=30, max_iter=1000, w=0.7, c1=1.5, c2=1.5,
-                 seed=None):
-        """
-        Particle Swarm Optimization (PSO) - General version for continuous problems.
-        """
+    def __init__(
+        self,
+        fitness_func,
+        lower_bound,
+        upper_bound,
+        dim,
+        population_size=30,
+        max_iter=1000,
+        w=0.7,
+        c1=1.5,
+        c2=1.5,
+        seed=None,
+        verbose=False
+    ):
         if seed is not None:
             np.random.seed(seed)
 
-        self.fitness_func = objective_function
+        self.fitness_func = fitness_func
         self.lower_bound = np.array(lower_bound)
         self.upper_bound = np.array(upper_bound)
         self.dim = dim
@@ -20,13 +29,16 @@ class ParticleSwarmOptimization:
         self.c1 = c1
         self.c2 = c2
         self.seed = seed
+        self.verbose = verbose
+
+        self.best_solution = None
+        self.best_fitness = None
+        self.history = []
 
     def simple_bounds(self, x):
-        """Giữ cá thể trong giới hạn."""
         return np.clip(x, self.lower_bound, self.upper_bound)
 
     def update_personal_best(self, positions, pbest, pbest_values):
-        """Cập nhật best cá nhân cho từng hạt."""
         for i in range(self.population_size):
             fitness = self.fitness_func(positions[i])
             if fitness < pbest_values[i]:
@@ -35,7 +47,6 @@ class ParticleSwarmOptimization:
         return pbest, pbest_values
 
     def update_global_best(self, pbest, pbest_values, gbest, gbest_value):
-        """Cập nhật best toàn cục."""
         best_idx = np.argmin(pbest_values)
         if pbest_values[best_idx] < gbest_value:
             gbest = pbest[best_idx].copy()
@@ -43,7 +54,6 @@ class ParticleSwarmOptimization:
         return gbest, gbest_value
 
     def update_velocity(self, velocities, positions, pbest, gbest):
-        """Cập nhật vận tốc theo công thức PSO."""
         r1 = np.random.rand(self.population_size, self.dim)
         r2 = np.random.rand(self.population_size, self.dim)
         new_velocities = (
@@ -54,50 +64,59 @@ class ParticleSwarmOptimization:
         return new_velocities
 
     def update_position(self, positions, velocities):
-        """Cập nhật vị trí hạt và giới hạn trong bound."""
         new_positions = positions + velocities
         return self.simple_bounds(new_positions)
 
-    def run(self, verbose=False):
-        """Thực thi thuật toán PSO."""
+    def run(self):
         rng = np.random.default_rng(self.seed)
 
-        # --- Khởi tạo ---
-        positions = rng.uniform(self.lower_bound, self.upper_bound, (self.population_size, self.dim))
+        positions = rng.uniform(
+            self.lower_bound,
+            self.upper_bound,
+            (self.population_size, self.dim)
+        )
         velocities = np.zeros((self.population_size, self.dim))
         pbest = positions.copy()
         pbest_values = np.array([self.fitness_func(x) for x in positions])
-        gbest = positions[np.argmin(pbest_values)]
-        gbest_value = np.min(pbest_values)
-        history = [gbest_value]
+        self.best_solution = positions[np.argmin(pbest_values)].copy()
+        self.best_fitness = np.min(pbest_values)
+        self.history = [self.best_fitness]
 
-        # --- Vòng lặp chính ---
         for t in range(self.max_iter):
             pbest, pbest_values = self.update_personal_best(positions, pbest, pbest_values)
-            gbest, gbest_value = self.update_global_best(pbest, pbest_values, gbest, gbest_value)
+            gbest, gbest_value = self.update_global_best(pbest, pbest_values, self.best_solution, self.best_fitness)
+            self.best_solution = gbest.copy()
+            self.best_fitness = gbest_value
             velocities = self.update_velocity(velocities, positions, pbest, gbest)
             positions = self.update_position(positions, velocities)
-            history.append(gbest_value)
+            self.history.append(self.best_fitness)
 
-            if verbose and (t % 50 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {gbest_value:.6f}")
+            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
+                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
-        print("\n--- Optimization Results (PSO) ---")
-        # print(f"Best Fitness: {gbest_value}")
-        # print(f"Best Solution: {gbest}")
+        if self.verbose:
+            print("\n--- Optimization Results (PSO) ---")
+            print(f"Best Fitness: {self.best_fitness:.6f}")
+            print(f"Best Solution: {self.best_solution}")
 
-        return gbest, gbest_value, history
+        return self.best_solution, self.best_fitness, self.history
 
-
-import numpy as np
 
 class ParitcleSwarmKnapsack:
-    def __init__(self, weights, values, capacity, dim=None,
-                 population_size=30, max_iter=1000, w=0.7, c1=1.5, c2=1.5,
-                 seed=None, verbose=True):
-        """
-        Particle Swarm Optimization (PSO) cho bài toán Knapsack (rời rạc 0-1)
-        """
+    def __init__(
+        self,
+        weights,
+        values,
+        capacity,
+        dim=None,
+        population_size=30,
+        max_iter=1000,
+        w=0.7,
+        c1=1.5,
+        c2=1.5,
+        seed=None,
+        verbose=True
+    ):
         if seed is not None:
             np.random.seed(seed)
 
@@ -114,37 +133,37 @@ class ParitcleSwarmKnapsack:
         self.verbose = verbose
         self.seed = seed
 
-    def fitness(self, solution):
-        """Tính giá trị tổng (chỉ hợp lệ mới tính)."""
-        total_weight = np.sum(solution * self.weights)
-        total_value = np.sum(solution * self.values)
-        if total_weight > self.capacity:
-            return 0  # hoặc -inf, nhưng 0 giúp tránh lỗi nan
-        return total_value
+        self.best_solution = None
+        self.best_fitness = 0
+        self.history = []
 
-    def sigmoid_solution(self, x):
-        """Ánh xạ giá trị thực sang nhị phân và đảm bảo hợp lệ."""
-        s = 1 / (1 + np.exp(-x))
-        sol = (s > 0.5).astype(int)
-        while np.sum(sol * self.weights) > self.capacity:
+    def is_valid(self, solution):
+        return np.sum(solution * self.weights) <= self.capacity
+
+    def repair(self, sol):
+        while not self.is_valid(sol):
             ones = np.where(sol == 1)[0]
             if len(ones) == 0:
                 break
             sol[np.random.choice(ones)] = 0
         return sol
 
+    def fitness(self, solution):
+        return np.sum(solution * self.values)
+
+    def sigmoid_solution(self, x):
+        s = 1 / (1 + np.exp(-x))
+        sol = (s > 0.5).astype(int)
+        return self.repair(sol)
+
     def initialize_population(self):
-        """Khởi tạo quần thể ngẫu nhiên trong [-4, 4]."""
         positions = np.random.uniform(-4, 4, (self.population_size, self.dim))
         velocities = np.zeros((self.population_size, self.dim))
         return positions, velocities
 
     def run(self):
-        """Main PSO loop."""
-        self.history = []  # reset history mỗi lần chạy
         positions, velocities = self.initialize_population()
 
-        # Chuyển sang nhị phân và tính fitness
         binary_positions = np.array([self.sigmoid_solution(x) for x in positions])
         fitness = np.array([self.fitness(x) for x in binary_positions])
 
@@ -153,14 +172,13 @@ class ParitcleSwarmKnapsack:
         gbest_idx = np.argmax(fitness)
         gbest = positions[gbest_idx].copy()
         gbest_fitness = fitness[gbest_idx]
-
-        # lưu vào history
-        self.history.append(gbest_fitness)
+        self.best_solution = self.sigmoid_solution(gbest)
+        self.best_fitness = self.fitness(self.best_solution)
+        self.history = [self.best_fitness]
 
         for t in range(1, self.max_iter + 1):
             r1 = np.random.rand(self.population_size, self.dim)
             r2 = np.random.rand(self.population_size, self.dim)
-
             velocities = (
                 self.w * velocities
                 + self.c1 * r1 * (pbest - positions)
@@ -168,34 +186,29 @@ class ParitcleSwarmKnapsack:
             )
             positions = positions + velocities
 
-            # Cập nhật cá thể nhị phân và fitness
             binary_positions = np.array([self.sigmoid_solution(x) for x in positions])
             fitness = np.array([self.fitness(x) for x in binary_positions])
 
-            # Cập nhật pbest
             improved = fitness > pbest_fitness
             pbest[improved] = positions[improved]
             pbest_fitness[improved] = fitness[improved]
 
-            # Cập nhật gbest
             best_idx = np.argmax(fitness)
             if fitness[best_idx] > gbest_fitness:
                 gbest = positions[best_idx].copy()
                 gbest_fitness = fitness[best_idx]
+                self.best_solution = self.sigmoid_solution(gbest)
+                self.best_fitness = self.fitness(self.best_solution)
 
-            # lưu history
-            self.history.append(gbest_fitness)
+            self.history.append(self.best_fitness)
 
             if self.verbose and (t % 50 == 0 or t == self.max_iter):
-                print(f"Iteration {t}/{self.max_iter}: best fitness = {gbest_fitness}")
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
-        # Giải pháp nhị phân cuối cùng
-        best_solution = self.sigmoid_solution(gbest)
-        best_value = self.fitness(best_solution)
+        if self.verbose:
+            print("\n--- Optimization Results (PSO Knapsack) ---")
+            print(f"Best Fitness: {self.best_fitness:.2f}")
+            print(f"Best Solution: {self.best_solution}")
+            print(f"Total Weight: {np.sum(self.best_solution * self.weights):.2f}")
 
-        print("\n=== Final Result (PSO-Knapsack) ===")
-        print(f"Best fitness (total value): {best_value}")
-        print(f"Best solution: {best_solution}")
-        print(f"Total weight: {np.sum(best_solution * self.weights)}")
-
-        return best_solution, best_value, self.history
+        return self.best_solution, self.best_fitness, self.history
