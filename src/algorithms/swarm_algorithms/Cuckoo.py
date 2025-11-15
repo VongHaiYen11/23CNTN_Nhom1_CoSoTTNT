@@ -35,15 +35,16 @@ class CuckooSearch:
         self.best_fitness = None
         self.history = []
 
-    def levy_flight(self, size):
+    def levy_flight(self):
         beta = self.beta
         sigma = (
             (math.gamma(1 + beta) * math.sin(math.pi * beta / 2))
             / (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))
         ) ** (1 / beta)
-        u = np.random.normal(0, sigma, size)
-        v = np.random.normal(0, 1, size)
-        return u / (np.abs(v) ** (1 / beta))
+        u = np.random.normal(0, sigma, self.dim)
+        v = np.random.normal(0, 1, self.dim)
+        step = u / (np.abs(v) ** (1 / beta))
+        return step
 
     def get_best_nest(self, nests, new_nests, fitness):
         new_fitness = np.array([self.fitness_func(x) for x in new_nests])
@@ -64,10 +65,14 @@ class CuckooSearch:
 
     def get_cuckoos(self, nests, best):
         n = self.population_size
-        steps = self.levy_flight((n, self.dim))
-        stepsize = self.alpha * steps * (nests - best)
-        new_nests = nests + stepsize * np.random.randn(n, self.dim)
-        return np.clip(new_nests, self.lower_bound, self.upper_bound)
+        new_nests = nests.copy()
+        for j in range(n):
+            s = nests[j, :].copy()
+            step = self.levy_flight()
+            stepsize = self.alpha * step * (s - best)
+            s = s + stepsize * np.random.randn(self.dim)
+            new_nests[j, :] = np.clip(s, self.lower_bound, self.upper_bound)
+        return new_nests
 
     def run(self):
         n = self.population_size
@@ -154,15 +159,16 @@ class CuckooSearchKnapsack:
     def initialize_population(self):
         return np.array([self.get_random_nest() for _ in range(self.population_size)])
 
-    def levy_flight(self, size):
+    def levy_flight(self):
         beta = self.beta
         sigma = (
             (math.gamma(1 + beta) * math.sin(math.pi * beta / 2))
             / (math.gamma((1 + beta) / 2) * beta * 2 ** ((beta - 1) / 2))
         ) ** (1 / beta)
-        u = np.random.normal(0, sigma, size)
-        v = np.random.normal(0, 1, size)
-        return u / (np.abs(v) ** (1 / beta))
+        u = np.random.normal(0, sigma, self.dim)
+        v = np.random.normal(0, 1, self.dim)
+        step = u / (np.abs(v) ** (1 / beta))
+        return step
 
     def repair(self, sol):
         while not self.is_valid(sol):
@@ -196,10 +202,14 @@ class CuckooSearchKnapsack:
 
     def get_cuckoos(self, nests, best):
         n = self.population_size
-        steps = self.levy_flight((n, self.dim))
-        stepsize = self.alpha * steps * (nests - best)
-        new_nests = nests + stepsize * np.random.randn(n, self.dim)
-        new_nests = np.array([self.repair(self.sigmoid_solution(x)) for x in new_nests])
+        new_nests = nests.copy()
+        for j in range(n):
+            s = nests[j, :].copy()
+            step = self.levy_flight()
+            stepsize = self.alpha * step * (s - best)
+            s = s + stepsize * np.random.randn(self.dim)
+            s = self.repair(self.sigmoid_solution(s))
+            new_nests[j, :] = s
         return new_nests
 
     def run(self):
