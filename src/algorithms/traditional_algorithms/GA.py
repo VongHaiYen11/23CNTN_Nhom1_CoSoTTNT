@@ -81,6 +81,8 @@ class GeneticAlgorithmContinuous:
         return mutated
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start GA =====")
         self.history = []
         for i in range(self.max_iter):
             fitness_values = self.sort_population()
@@ -103,15 +105,15 @@ class GeneticAlgorithmContinuous:
 
             self.population = new_population[:self.population_size]
 
-            if self.verbose and (i % 50 == 0 or i == self.max_iter - 1):
-                print(f"Iteration {i+1}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (i % 10 == 0 or i == self.max_iter - 1):
+                print(f"Iteration {i}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         self.best_solution = self.population[0]
         if self.verbose:
-            print("\n--- Optimization Results (GA) ---")
+            print("--- Optimization Results (GA) ---")
             print(f"Best Fitness: {self.fitness_func(self.best_solution):.6f}")
             print(f"Best Solution: {self.best_solution}")
-        return self.best_solution, self.fitness_func(self.best_solution), self.history, self.population
+        return self.best_solution, self.fitness_func(self.best_solution), self.history
 
 
 class GeneticAlgorithmKnapsack:
@@ -225,6 +227,8 @@ class GeneticAlgorithmKnapsack:
         return np.array(mutated).reshape(-1, self.dim)
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start GA Knapsack =====")
         self.best_solution = np.empty((0, self.dim), dtype=int)
         self.best_fitness = 0
         self.history = []
@@ -257,10 +261,10 @@ class GeneticAlgorithmKnapsack:
             self.history.append(self.best_fitness)
 
             if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (GA Knapsack) ---")
+            print("--- Optimization Results (GA Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

@@ -96,6 +96,8 @@ class FireflyAlgorithm:
         return best_solution, best_fitness, fitness_history
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start FA =====")
         (
             fireflies,
             intensity,
@@ -118,12 +120,12 @@ class FireflyAlgorithm:
                 self.history
             )
 
-            if self.verbose and (iteration % 50 == 0 or iteration == self.max_iter - 1):
-                print(f"Iteration {iteration+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         self.fireflies = fireflies
         if self.verbose:
-            print("\n--- Optimization Results (FA) ---")
+            print("--- Optimization Results (FA) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -232,6 +234,8 @@ class FireflyKnapsack:
                 self.fitness[i] = child_fitness
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start FA Knapsack =====")
         (
             fireflies,
             fitness,
@@ -256,11 +260,11 @@ class FireflyKnapsack:
 
             self.history.append(self.best_fitness)
 
-            if self.verbose and (iteration % 50 == 0 or iteration == self.max_iter - 1):
-                print(f"Iteration {iteration+1}/{self.max_iter}: best value = {self.best_fitness:.2f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (Firefly Knapsack) ---")
+            print("--- Optimization Results (Firefly Knapsack) ---")
             total_weight = np.sum(self.best_solution * self.weights)
             print(f"Best Value: {self.best_fitness:.2f}")
             print(f"Total Weight: {total_weight:.2f} <= {self.max_weight:.2f}")

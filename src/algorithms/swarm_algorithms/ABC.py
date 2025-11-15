@@ -159,6 +159,8 @@ class ArtificialBeeColony:
         return best_solution, best_fitness, fitness_history
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start ABC =====")
         (
             food_sources,
             fitness_values,
@@ -190,11 +192,11 @@ class ArtificialBeeColony:
                 self.history
             )
 
-            if self.verbose and (iteration % 50 == 0 or iteration == self.max_iter - 1):
-                print(f"Iteration {iteration+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (ABC) ---")
+            print("--- Optimization Results (ABC) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -350,6 +352,8 @@ class ArtificialBeeColonyKnapsack:
         return best_sol, best_fit, history
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start ABC Knapsack =====")
         (
             food_sources,
             fitness_values,
@@ -372,13 +376,13 @@ class ArtificialBeeColonyKnapsack:
                 self.history
             )
 
-            if self.verbose and (it % 50 == 0 or it == self.max_iter - 1):
-                print(f"Iteration {it+1}/{self.max_iter}: best value = {self.best_fitness:.2f}")
+            if self.verbose and (it % 10 == 0 or it == self.max_iter - 1):
+                print(f"Iteration {it}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         best_items = np.where(self.best_solution == 1)[0]
 
         if self.verbose:
-            print("\n--- Optimization Results (ABC Knapsack) ---")
+            print("--- Optimization Results (ABC Knapsack) ---")
             print(f"Best Value: {self.best_fitness:.2f}")
             print(f"Selected Items: {best_items.tolist()}")
             print(f"Total Weight: {np.dot(self.best_solution, self.weights):.2f}/{self.max_weight:.2f}")

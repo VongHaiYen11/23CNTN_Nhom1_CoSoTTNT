@@ -75,6 +75,8 @@ class CuckooSearch:
         return new_nests
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start Cuckoo =====")
         n = self.population_size
         nests = np.random.uniform(
             self.lower_bound,
@@ -98,17 +100,17 @@ class CuckooSearch:
             self.best_fitness = fmin
             self.history.append(self.best_fitness)
 
-            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
             t += 1
 
         if self.verbose:
-            print("\n--- Optimization Results (Cuckoo) ---")
+            print("--- Optimization Results (Cuckoo) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
-        return self.best_solution, self.best_fitness
+        return self.best_solution, self.best_fitness, self.history
 
 
 class CuckooSearchKnapsack:
@@ -213,6 +215,8 @@ class CuckooSearchKnapsack:
         return new_nests
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start Cuckoo Knapsack =====")
         nests = self.initialize_population()
         fitness = np.array([self.fitness(x) for x in nests])
         best_idx = np.argmax(fitness)
@@ -230,11 +234,11 @@ class CuckooSearchKnapsack:
             self.best_fitness = fmax
             self.history.append(self.best_fitness)
 
-            if self.verbose and (t % 50 == 0 or t == self.max_iter):
+            if self.verbose and (t % 10 == 0 or t == self.max_iter):
                 print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (Cuckoo Knapsack) ---")
+            print("--- Optimization Results (Cuckoo Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

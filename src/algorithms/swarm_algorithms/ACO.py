@@ -83,6 +83,8 @@ class AntColonyOptimizationContinuous:
         self.archive_fitness = combined_fitness[sort_indices][:self.archive_size]
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start ACO =====")
         self.best_solution = self.archive[0].copy()
         self.best_fitness = self.archive_fitness[0]
         self.history = []
@@ -99,10 +101,10 @@ class AntColonyOptimizationContinuous:
 
             self.history.append(self.best_fitness)
             if self.verbose and (it % 10 == 0 or it == self.max_iter - 1):
-                print(f"Iter {it+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+                print(f"Iteration {it}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (ACO) ---")
+            print("--- Optimization Results (ACO) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -193,6 +195,8 @@ class AntColonyOptimizationKnapsack:
                 self.tau += delta_tau * sol
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start ACO Knapsack =====")
         for it in range(1, self.max_iter + 1):
             all_solutions = []
             all_fitness = []
@@ -214,10 +218,10 @@ class AntColonyOptimizationKnapsack:
             self.update_pheromone(all_solutions, all_fitness)
 
             if self.verbose and (it % 10 == 0 or it == self.max_iter):
-                print(f"Iter {it}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
+                print(f"Iteration {it}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (ACO Knapsack) ---")
+            print("--- Optimization Results (ACO Knapsack) ---")
             print(f"Best Solution: {self.best_solution}")
             print(f"Total Value: {self.best_fitness:.2f}")
             print(f"Total Weight: {np.sum(self.best_solution * self.weights):.2f}")

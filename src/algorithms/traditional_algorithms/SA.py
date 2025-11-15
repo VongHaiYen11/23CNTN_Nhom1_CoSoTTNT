@@ -31,6 +31,8 @@ class SimulatedAnnealing:
         self.history = []
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start SA =====")
         current_solution = np.random.uniform(
             self.lower_bound,
             self.upper_bound,
@@ -71,11 +73,11 @@ class SimulatedAnnealing:
 
             self.history.append(self.best_fitness)
 
-            if self.verbose and (i % 50 == 0 or i == self.max_iter):
-                print(f"Iteration {i}: Temp={temp:.4f}, Best fitness={self.best_fitness:.6f}")
+            if self.verbose and (i % 10 == 0 or i == self.max_iter):
+                print(f"Iteration {i}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (SA) ---")
+            print("--- Optimization Results (SA) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -135,6 +137,8 @@ class SimulatedAnnealingKnapsack:
                 return neighbor
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start SA Knapsack =====")
         current_solution = np.zeros(self.dim, dtype=int)
         current_fitness = self.fitness(current_solution)
         self.best_solution = current_solution.copy()
@@ -158,11 +162,11 @@ class SimulatedAnnealingKnapsack:
 
             self.history.append(self.best_fitness)
 
-            if self.verbose and (iteration % 50 == 0 or iteration == self.max_iter):
-                print(f"Iteration {iteration}: Temp={temp:.4f}, Best fitness={self.best_fitness:.2f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (SA Knapsack) ---")
+            print("--- Optimization Results (SA Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

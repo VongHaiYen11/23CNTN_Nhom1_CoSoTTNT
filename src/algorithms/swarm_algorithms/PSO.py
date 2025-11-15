@@ -68,6 +68,8 @@ class ParticleSwarmOptimization:
         return self.simple_bounds(new_positions)
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start PSO =====")
         rng = np.random.default_rng(self.seed)
 
         positions = rng.uniform(
@@ -91,11 +93,11 @@ class ParticleSwarmOptimization:
             positions = self.update_position(positions, velocities)
             self.history.append(self.best_fitness)
 
-            if self.verbose and (t % 50 == 0 or t == self.max_iter - 1):
-                print(f"Iteration {t+1}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (t % 10 == 0 or t == self.max_iter - 1):
+                print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (PSO) ---")
+            print("--- Optimization Results (PSO) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -162,6 +164,8 @@ class ParitcleSwarmKnapsack:
         return positions, velocities
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start PSO Knapsack =====")
         positions, velocities = self.initialize_population()
 
         binary_positions = np.array([self.sigmoid_solution(x) for x in positions])
@@ -202,11 +206,11 @@ class ParitcleSwarmKnapsack:
 
             self.history.append(self.best_fitness)
 
-            if self.verbose and (t % 50 == 0 or t == self.max_iter):
+            if self.verbose and (t % 10 == 0 or t == self.max_iter):
                 print(f"Iteration {t}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (PSO Knapsack) ---")
+            print("--- Optimization Results (PSO Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
             print(f"Total Weight: {np.sum(self.best_solution * self.weights):.2f}")

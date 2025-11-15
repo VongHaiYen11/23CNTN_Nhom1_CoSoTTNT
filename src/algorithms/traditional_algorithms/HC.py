@@ -29,6 +29,8 @@ class HillClimbing:
         self.history = []
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start HC =====")
         current_solution = np.random.uniform(
             self.lower_bound,
             self.upper_bound,
@@ -65,11 +67,11 @@ class HillClimbing:
                 break
 
             self.history.append(self.best_fitness)
-            if self.verbose:
-                print(f"Iteration {iteration+1}: best fitness = {self.best_fitness:.6f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (HC) ---")
+            print("--- Optimization Results (HC) ---")
             print(f"Best Fitness: {self.best_fitness:.6f}")
             print(f"Best Solution: {self.best_solution}")
 
@@ -122,6 +124,8 @@ class HillClimbingKnapsack:
         return neighbors
 
     def run(self):
+        if self.verbose:
+            print("\n===== Start HC Knapsack =====")
         self.best_solution = np.zeros(self.dim, dtype=int)
         while not self.is_valid(self.best_solution):
             self.best_solution = np.random.randint(0, 2, self.dim)
@@ -145,11 +149,11 @@ class HillClimbingKnapsack:
                 break
 
             self.history.append(self.best_fitness)
-            if self.verbose:
-                print(f"Iteration {iteration+1}: best fitness = {self.best_fitness:.2f}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
 
         if self.verbose:
-            print("\n--- Optimization Results (HC Knapsack) ---")
+            print("--- Optimization Results (HC Knapsack) ---")
             print(f"Best Fitness: {self.best_fitness:.2f}")
             print(f"Best Solution: {self.best_solution}")
 

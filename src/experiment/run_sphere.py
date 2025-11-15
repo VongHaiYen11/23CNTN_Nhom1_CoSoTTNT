@@ -18,7 +18,7 @@ from src.problem.continuous.sphere import sphere
 N_RUNS = 1
 DIMS = [30]
 POP_SIZES = [50]
-MAX_ITERATIONS = 100
+MAX_ITERATIONS = 500
 LOWER_BOUND = -5.12
 UPPER_BOUND = 5.12
 SEED = 42
@@ -137,24 +137,10 @@ def run_algorithm(algo_name, dim, pop_size, seed):
     algorithm = create_algorithm(algo_name, dim, pop_size, seed)
     result = algorithm.run()
     
-    if algo_name == 'Cuckoo':
-        best_sol, best_fit = result
-        hist = [best_fit] * MAX_ITERATIONS
-        population = None
-    elif algo_name == 'GA':
-        best_sol, best_fit, hist, population = result
-    elif algo_name == 'FA':
-        best_sol, best_fit, hist = result
-        population = algorithm.fireflies
-    elif algo_name == 'ABC':
-        best_sol, best_fit, hist = result
-        population = algorithm.food_sources
-    else:
-        best_sol, best_fit, hist = result
-        population = None
+    best_sol, best_fit, hist = result
     
     elapsed = time.time() - start_time
-    space = measure_space_usage(population) if population is not None else measure_space_usage(best_sol)
+    space = measure_space_usage(best_sol)
     
     return {
         'best_fit': best_fit,
