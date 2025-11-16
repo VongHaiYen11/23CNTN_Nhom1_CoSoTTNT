@@ -280,12 +280,18 @@ def run_experiments(test_cases=None):
                     times.append(res['elapsed'])
                     spaces.append(res['space'])
             
+            # Ensure solution is stored as string with tab prefix to force Excel to treat as text
+            solution_str = str(solutions[0]) if solutions else ''
+            # Add tab character prefix to ensure Excel treats it as text (not visible but prevents number conversion)
+            if solution_str:
+                solution_str = '\t' + solution_str
+            
             results.append({
                 "Test Case": test_case_name,
                 "Algorithm": algo,
                 'Mean Value': np.mean(values),
                 'Mean Weight': np.mean(weights_list),
-                'Solution': solutions[0] if solutions else '',
+                'Solution': solution_str,
                 'Mean Time (s)': np.mean(times),
                 'Mean Space (bytes)': np.mean(spaces)
             })
@@ -293,7 +299,13 @@ def run_experiments(test_cases=None):
     
     print("\n" + "=" * 100)
     print_results(results)
-    pd.DataFrame(results).to_csv(f"results/resultsKnapsack_{timestamp}.csv", index=False)
+    
+    # Create DataFrame and ensure Solution column is explicitly string type
+    df = pd.DataFrame(results)
+    df['Solution'] = df['Solution'].astype(str)
+    
+    # Save to CSV - Solution column is already formatted as string with tab prefix
+    df.to_csv(f"results/resultsKnapsack_{timestamp}.csv", index=False)
     print("Result CSV saved!")
     print("\nFinish")
 
