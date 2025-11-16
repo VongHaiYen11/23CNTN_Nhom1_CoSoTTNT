@@ -2,6 +2,8 @@ import numpy as np
 
 
 class FireflyAlgorithm:
+    """Firefly Algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -16,6 +18,24 @@ class FireflyAlgorithm:
         seed=None,
         verbose=False
     ):
+        """Initialize Firefly Algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float): Lower bound for search space
+        upper_bound (float): Upper bound for search space
+        dim (int): Problem dimension
+        population_size (int): Number of fireflies
+        max_iter (int): Maximum number of iterations
+        alpha (float): Randomness parameter
+        beta (float): Attractiveness at distance 0
+        gamma (float): Light absorption coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         self.fireflies = None
         if seed is not None:
             np.random.seed(seed)
@@ -36,6 +56,14 @@ class FireflyAlgorithm:
         self.history = []
 
     def initialize_population(self):
+        """Initialize firefly population and evaluate fitness.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (fireflies, intensity, best_solution, best_fitness, fitness_history)
+        """
         fireflies = (
             self.lower_bound
             + (self.upper_bound - self.lower_bound)
@@ -55,6 +83,16 @@ class FireflyAlgorithm:
         return fireflies, intensity, best_solution, best_fitness, fitness_history
 
     def move_fireflies(self, fireflies, intensity, alpha):
+        """Move fireflies towards brighter ones based on attractiveness.
+
+        Parameters:
+        fireflies (np.ndarray): Current firefly positions
+        intensity (np.ndarray): Current fitness values (intensity)
+        alpha (float): Randomness parameter
+
+        Returns:
+        None
+        """
         for i in range(self.population_size):
             for j in range(self.population_size):
                 if intensity[j] < intensity[i]:
@@ -85,6 +123,18 @@ class FireflyAlgorithm:
         best_fitness,
         fitness_history
     ):
+        """Update best solution found so far.
+
+        Parameters:
+        fireflies (np.ndarray): Current firefly positions
+        intensity (np.ndarray): Current fitness values
+        best_solution (np.ndarray): Current best solution
+        best_fitness (float): Current best fitness
+        fitness_history (list): History of best fitness values
+
+        Returns:
+        tuple: (best_solution, best_fitness, fitness_history)
+        """
         current_best_idx = np.argmin(intensity)
         current_best_fitness = intensity[current_best_idx]
 
@@ -96,6 +146,14 @@ class FireflyAlgorithm:
         return best_solution, best_fitness, fitness_history
 
     def run(self):
+        """Execute Firefly Algorithm optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start FA =====")
         (
@@ -133,6 +191,8 @@ class FireflyAlgorithm:
 
 
 class FireflyKnapsack:
+    """Firefly Algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -146,6 +206,23 @@ class FireflyKnapsack:
         seed=None,
         verbose=False
     ):
+        """Initialize Firefly Algorithm for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        max_weight (float): Maximum weight capacity
+        population_size (int): Number of fireflies
+        max_iter (int): Maximum number of iterations
+        alpha (float): Mutation rate
+        beta (float): Attractiveness at distance 0
+        gamma (float): Light absorption coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         self.weights = np.array(weights)
         self.values = np.array(values)
         self.max_weight = max_weight
@@ -168,9 +245,25 @@ class FireflyKnapsack:
             np.random.seed(seed)
 
     def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.max_weight
 
     def initialize_population(self):
+        """Initialize firefly population for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (fireflies, fitness, best_solution, best_fitness, fitness_history)
+        """
         fireflies = np.random.randint(0, 2, size=(self.population_size, self.n_items))
         fitness = np.array([self.evaluate(self.repair(sol)) for sol in fireflies])
 
@@ -188,12 +281,38 @@ class FireflyKnapsack:
         return fireflies, fitness, best_solution, best_fitness, fitness_history
 
     def evaluate(self, solution):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(solution * self.values)
 
     def hamming_distance(self, x, y):
+        """Calculate Hamming distance between two binary vectors.
+
+        Parameters:
+        x (np.ndarray): First binary vector
+        y (np.ndarray): Second binary vector
+
+        Returns:
+        int: Hamming distance (number of differing bits)
+        """
         return np.sum(x != y)
 
     def crossover(self, parent1, parent2):
+        """Perform crossover between two parent solutions.
+
+        Parameters:
+        parent1 (np.ndarray): First parent solution
+        parent2 (np.ndarray): Second parent solution
+
+        Returns:
+        np.ndarray: Offspring solution
+        """
         if np.random.rand() < 0.8:
             point = np.random.randint(1, self.n_items)
             child = np.concatenate([parent1[:point], parent2[point:]])
@@ -202,12 +321,28 @@ class FireflyKnapsack:
         return child
 
     def mutate(self, solution):
+        """Mutate solution by flipping bits with probability alpha.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Mutated solution
+        """
         for i in range(self.n_items):
             if np.random.rand() < self.alpha:
                 solution[i] = 1 - solution[i]
         return solution
 
     def repair(self, solution):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
         sol = solution.copy()
         while not self.is_valid(sol):
             ones = np.where(sol == 1)[0]
@@ -217,6 +352,15 @@ class FireflyKnapsack:
         return sol
 
     def move_firefly(self, i, j):
+        """Move firefly i towards brighter firefly j.
+
+        Parameters:
+        i (int): Index of firefly to move
+        j (int): Index of brighter firefly
+
+        Returns:
+        None
+        """
         if self.fitness[j] <= self.fitness[i]:
             return
 
@@ -234,6 +378,14 @@ class FireflyKnapsack:
                 self.fitness[i] = child_fitness
 
     def run(self):
+        """Execute Firefly Algorithm for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start FA Knapsack =====")
         (

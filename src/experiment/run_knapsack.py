@@ -15,7 +15,7 @@ from src.algorithms.traditional_algorithms.HC import HillClimbingKnapsack
 from src.algorithms.traditional_algorithms.SA import SimulatedAnnealingKnapsack
 from src.problem.discrete.knapsack import WEIGHTS, VALUES, MAX_WEIGHT, N_ITEMS, TEST_CASES
 
-N_RUNS = 10
+N_RUNS = 1
 POP_SIZES = [50]
 MAX_ITERATIONS = 200
 SEED = 42
@@ -25,6 +25,14 @@ ALGOS = ['ABC', 'FA', 'Cuckoo', 'PSO', 'ACO', 'HC', 'SA', 'GA']
 
 
 def measure_space_usage(obj):
+    """Calculate memory usage of an object recursively.
+
+    Parameters:
+    obj: Object to measure (numpy array, list, or other)
+
+    Returns:
+    int: Total memory usage in bytes
+    """
     if isinstance(obj, np.ndarray):
         return obj.nbytes + sys.getsizeof(obj)
     elif isinstance(obj, list):
@@ -33,7 +41,20 @@ def measure_space_usage(obj):
 
 
 def create_algorithm(algo_name, pop_size, seed, weights=None, values=None, max_weight=None, n_items=None):
-    # Use provided parameters or default to original test case
+    """Create algorithm instance for knapsack problem optimization.
+
+    Parameters:
+    algo_name (str): Name of the algorithm (ABC, FA, Cuckoo, PSO, ACO, HC, SA, GA)
+    pop_size (int): Population size
+    seed (int): Random seed for reproducibility
+    weights (np.ndarray, optional): Item weights, defaults to WEIGHTS
+    values (np.ndarray, optional): Item values, defaults to VALUES
+    max_weight (float, optional): Maximum weight capacity, defaults to MAX_WEIGHT
+    n_items (int, optional): Number of items, defaults to N_ITEMS
+
+    Returns:
+    object: Algorithm instance configured for knapsack problem
+    """
     if weights is None:
         weights = WEIGHTS
     if values is None:
@@ -136,6 +157,16 @@ def create_algorithm(algo_name, pop_size, seed, weights=None, values=None, max_w
 
 
 def compute_solution_metrics(solution, values, weights):
+    """Compute solution metrics including total value, weight, and binary representation.
+
+    Parameters:
+    solution (np.ndarray): Solution vector (binary or continuous)
+    values (np.ndarray): Item values array
+    weights (np.ndarray): Item weights array
+
+    Returns:
+    dict: Dictionary containing value, weight, and binary representation
+    """
     binary = (solution > 0).astype(int) if solution.dtype != int else solution
     return {
         'value': np.sum(binary * values),
@@ -145,11 +176,23 @@ def compute_solution_metrics(solution, values, weights):
 
 
 def run_algorithm(algo_name, pop_size, seed, weights=None, values=None, max_weight=None, n_items=None):
+    """Run algorithm once and return performance metrics for knapsack problem.
+
+    Parameters:
+    algo_name (str): Name of the algorithm to run
+    pop_size (int): Population size
+    seed (int): Random seed for reproducibility
+    weights (np.ndarray, optional): Item weights, defaults to WEIGHTS
+    values (np.ndarray, optional): Item values, defaults to VALUES
+    max_weight (float, optional): Maximum weight capacity, defaults to MAX_WEIGHT
+    n_items (int, optional): Number of items, defaults to N_ITEMS
+
+    Returns:
+    dict: Dictionary containing value, weight, solution string, elapsed time, and space usage
+    """
     np.random.seed(seed)
     random.seed(seed)
     start_time = time.time()
-    
-    # Use provided parameters or default to original test case
     if weights is None:
         weights = WEIGHTS
     if values is None:
@@ -178,13 +221,17 @@ def run_algorithm(algo_name, pop_size, seed, weights=None, values=None, max_weig
 
 
 def print_results(results_list):
+    """Print formatted results table for knapsack optimization experiments.
+
+    Parameters:
+    results_list (list): List of dictionaries containing experiment results
+
+    Returns:
+    None
+    """
     df = pd.DataFrame(results_list)
-    
-    # Check if Test Case column exists
     has_test_case = 'Test Case' in df.columns
-    
     if has_test_case:
-        # Sort by test case, then by mean value
         df = df.sort_values(by=['Test Case', 'Mean Value'], ascending=[True, False]).reset_index(drop=True)
     else:
         df = df.sort_values(by='Mean Value', ascending=False).reset_index(drop=True)
@@ -234,16 +281,16 @@ def print_results(results_list):
 
 
 def run_experiments(test_cases=None):
-    """
-    Run experiments for multiple test cases.
-    
-    Args:
-        test_cases: Dictionary of test cases to run. If None, uses all test cases from knapsack.py
+    """Run knapsack optimization experiments for all algorithms and test cases.
+
+    Parameters:
+    test_cases (dict, optional): Dictionary of test cases to run, defaults to all TEST_CASES
+
+    Returns:
+    None
     """
     os.makedirs("results", exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    
-    # Use provided test cases or default to all test cases
     if test_cases is None:
         test_cases = TEST_CASES
     
@@ -252,19 +299,15 @@ def run_experiments(test_cases=None):
     print(f"Number of test cases: {len(test_cases)}")
     print(f"Number of runs per test case: {N_RUNS}")
     print("=" * 100)
-    
-    # Iterate over each test case
     for test_case_name, test_case in test_cases.items():
         print(f"\nRunning test case: {test_case_name}")
         print(f"  Items: {test_case['n_items']}, Max Weight: {test_case['max_weight']}")
-        
-        # Run each algorithm for this test case
         for algo in ALGOS:
             values, weights_list, solutions, times, spaces = [], [], [], [], []
             
             for pop in POP_SIZES:
                 for run in range(N_RUNS):
-                    seed = random.randint(0, 10000)  # Use larger seed range for more variety
+                    seed = random.randint(0, 10000)
                     res = run_algorithm(
                         algo, 
                         pop, 
@@ -279,10 +322,7 @@ def run_experiments(test_cases=None):
                     solutions.append(res['solution'])
                     times.append(res['elapsed'])
                     spaces.append(res['space'])
-            
-            # Ensure solution is stored as string with tab prefix to force Excel to treat as text
             solution_str = str(solutions[0]) if solutions else ''
-            # Add tab character prefix to ensure Excel treats it as text (not visible but prevents number conversion)
             if solution_str:
                 solution_str = '\t' + solution_str
             
@@ -299,12 +339,8 @@ def run_experiments(test_cases=None):
     
     print("\n" + "=" * 100)
     print_results(results)
-    
-    # Create DataFrame and ensure Solution column is explicitly string type
     df = pd.DataFrame(results)
     df['Solution'] = df['Solution'].astype(str)
-    
-    # Save to CSV - Solution column is already formatted as string with tab prefix
     df.to_csv(f"results/resultsKnapsack_{timestamp}.csv", index=False)
     print("Result CSV saved!")
     print("\nFinish")

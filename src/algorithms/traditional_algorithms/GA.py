@@ -2,6 +2,8 @@ import numpy as np
 
 
 class GeneticAlgorithmContinuous:
+    """Genetic Algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -16,6 +18,24 @@ class GeneticAlgorithmContinuous:
         seed=None,
         verbose=False
     ):
+        """Initialize Genetic Algorithm for continuous optimization.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        dim (int): Problem dimension
+        population_size (int): Number of individuals in population
+        alpha (float): Crossover blending parameter
+        max_iter (int): Maximum number of iterations
+        elitism (int): Number of elite individuals to preserve
+        sigma (float): Mutation standard deviation
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
         self.fitness_func = fitness_func
@@ -39,19 +59,51 @@ class GeneticAlgorithmContinuous:
         self.history = []
 
     def evaluate_population(self):
+        """Evaluate fitness of all individuals in population.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Array of fitness values
+        """
         return np.array([self.fitness_func(ind) for ind in self.population])
 
     def sort_population(self):
+        """Sort population by fitness in ascending order.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Sorted fitness values
+        """
         fitness_values = self.evaluate_population()
         sorted_idx = np.argsort(fitness_values)
         self.population = self.population[sorted_idx]
         return fitness_values[sorted_idx]
 
     def elitism_selection(self):
+        """Select elite individuals from sorted population.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Elite individuals
+        """
         self.sort_population()
         return self.population[:self.elitism]
 
     def selection(self, n_select):
+        """Tournament selection: select n_select individuals.
+
+        Parameters:
+        n_select (int): Number of individuals to select
+
+        Returns:
+        np.ndarray: Selected individuals
+        """
         fitness_values = self.evaluate_population()
         idx1 = np.random.randint(0, self.population_size, n_select)
         idx2 = np.random.randint(0, self.population_size, n_select)
@@ -64,6 +116,15 @@ class GeneticAlgorithmContinuous:
         return selected
 
     def crossover(self, selected, n_crossover):
+        """Perform arithmetic crossover between selected parents.
+
+        Parameters:
+        selected (np.ndarray): Selected parent individuals
+        n_crossover (int): Number of offspring to create
+
+        Returns:
+        np.ndarray: Offspring from crossover
+        """
         parents_idx = np.random.randint(0, len(selected), (n_crossover, 2))
         dads = selected[parents_idx[:, 0]]
         moms = selected[parents_idx[:, 1]]
@@ -71,6 +132,15 @@ class GeneticAlgorithmContinuous:
         return crossed
 
     def mutation(self, selected, n_mutation):
+        """Apply Gaussian mutation to selected individuals.
+
+        Parameters:
+        selected (np.ndarray): Selected individuals
+        n_mutation (int): Number of individuals to mutate
+
+        Returns:
+        np.ndarray: Mutated individuals
+        """
         parents = selected[np.random.randint(0, len(selected), n_mutation)]
         mutations = self.sigma * np.random.randn(n_mutation, self.dim)
         mutated = np.clip(
@@ -81,6 +151,14 @@ class GeneticAlgorithmContinuous:
         return mutated
 
     def run(self):
+        """Execute Genetic Algorithm optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start GA =====")
         self.history = []
@@ -117,6 +195,8 @@ class GeneticAlgorithmContinuous:
 
 
 class GeneticAlgorithmKnapsack:
+    """Genetic Algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -130,6 +210,23 @@ class GeneticAlgorithmKnapsack:
         seed=None,
         verbose=True
     ):
+        """Initialize GA for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        population_size (int): Number of individuals in population
+        max_iter (int): Maximum number of iterations
+        elitism (int): Number of elite individuals to preserve
+        mutation_rate (float): Probability of bit mutation
+        crossover_rate (float): Probability of crossover
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -150,6 +247,14 @@ class GeneticAlgorithmKnapsack:
         self.history = []
 
     def initialize_population(self):
+        """Initialize population with random valid solutions.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Array of valid binary solutions
+        """
         population = []
         while len(population) < self.population_size:
             individual = np.random.randint(0, 2, self.dim)
@@ -158,22 +263,62 @@ class GeneticAlgorithmKnapsack:
         return np.array(population).reshape(-1, self.dim)
 
     def fitness_func(self, x):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        x (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(x * self.values)
 
     def is_valid(self, x):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        x (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(x * self.weights) <= self.capacity
 
     def sort_population(self):
+        """Sort population by fitness in descending order.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Sorted fitness values
+        """
         fitness_values = np.array([self.fitness_func(ind) for ind in self.population])
         idx = np.argsort(-fitness_values)
         self.population = self.population[idx]
         return fitness_values[idx]
 
     def elitism_selection(self):
+        """Select elite individuals from sorted population (knapsack version).
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Elite individuals
+        """
         self.sort_population()
         return self.population[:self.elitism].copy()
 
     def selection(self, n_select):
+        """Tournament selection for knapsack: select n_select individuals.
+
+        Parameters:
+        n_select (int): Number of individuals to select
+
+        Returns:
+        np.ndarray: Selected individuals
+        """
         selection_pool = []
         for _ in range(n_select):
             idx1, idx2 = np.random.randint(0, self.population_size, size=2)
@@ -189,6 +334,15 @@ class GeneticAlgorithmKnapsack:
         return np.array(selection_pool).reshape(-1, self.dim)
 
     def crossover(self, selected, n_crossover):
+        """Perform uniform crossover for knapsack problem.
+
+        Parameters:
+        selected (np.ndarray): Selected parent individuals
+        n_crossover (int): Number of offspring pairs to create
+
+        Returns:
+        np.ndarray: Offspring from crossover
+        """
         crossover_pool = []
         if len(selected) < 2:
             return np.empty((0, self.dim), dtype=int)
@@ -208,6 +362,15 @@ class GeneticAlgorithmKnapsack:
         return np.array(crossover_pool).reshape(-1, self.dim)
 
     def mutation(self, selected, n_mutation):
+        """Apply bit-flip mutation for knapsack problem.
+
+        Parameters:
+        selected (np.ndarray): Selected individuals
+        n_mutation (int): Number of individuals to mutate
+
+        Returns:
+        np.ndarray: Mutated individuals
+        """
         mutated = []
         if len(selected) < 1:
             return np.empty((0, self.dim), dtype=int)
@@ -223,6 +386,14 @@ class GeneticAlgorithmKnapsack:
         return np.array(mutated).reshape(-1, self.dim)
 
     def run(self):
+        """Execute Genetic Algorithm for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start GA Knapsack =====")
         self.best_solution = np.empty((0, self.dim), dtype=int)

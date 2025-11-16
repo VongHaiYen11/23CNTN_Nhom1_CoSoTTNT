@@ -15,8 +15,8 @@ from src.algorithms.traditional_algorithms.HC import HillClimbing
 from src.algorithms.traditional_algorithms.SA import SimulatedAnnealing
 from src.problem.continuous.sphere import sphere
 
-N_RUNS = 10
-DIMS = [10, 30, 50]
+N_RUNS = 1
+DIMS = [10]
 POP_SIZES = [50]
 MAX_ITERATIONS = 350
 LOWER_BOUND = -5.12
@@ -27,6 +27,14 @@ VERBOSE = True
 ALGOS = ['FA', 'ABC', 'Cuckoo', 'PSO', 'HC', 'GA', 'SA', 'ACO']
 
 def measure_space_usage(obj):
+    """Calculate memory usage of an object recursively.
+
+    Parameters:
+    obj: Object to measure (numpy array, list, or other)
+
+    Returns:
+    int: Total memory usage in bytes
+    """
     if isinstance(obj, np.ndarray):
         return obj.nbytes + sys.getsizeof(obj)
     elif isinstance(obj, list):
@@ -35,6 +43,17 @@ def measure_space_usage(obj):
 
 
 def create_algorithm(algo_name, dim, pop_size, seed):
+    """Create algorithm instance for sphere function optimization.
+
+    Parameters:
+    algo_name (str): Name of the algorithm (FA, ABC, Cuckoo, PSO, ACO, HC, GA, SA)
+    dim (int): Problem dimension
+    pop_size (int): Population size
+    seed (int): Random seed for reproducibility
+
+    Returns:
+    object: Algorithm instance configured for sphere function
+    """
     if algo_name == 'FA':
         return FireflyAlgorithm(
             fitness_func=sphere,
@@ -129,6 +148,17 @@ def create_algorithm(algo_name, dim, pop_size, seed):
 
 
 def run_algorithm(algo_name, dim, pop_size, seed):
+    """Run algorithm once and return performance metrics.
+
+    Parameters:
+    algo_name (str): Name of the algorithm to run
+    dim (int): Problem dimension
+    pop_size (int): Population size
+    seed (int): Random seed for reproducibility
+
+    Returns:
+    dict: Dictionary containing best_fit, elapsed time, and space usage
+    """
     np.random.seed(seed)
     random.seed(seed)
     start_time = time.time()
@@ -149,6 +179,14 @@ def run_algorithm(algo_name, dim, pop_size, seed):
 
 
 def print_results(results_list):
+    """Print formatted results table for sphere optimization experiments.
+
+    Parameters:
+    results_list (list): List of dictionaries containing experiment results
+
+    Returns:
+    None
+    """
     df = pd.DataFrame(results_list)
     
     df['Mean Fitness'] = df['Mean Fitness'].apply(lambda x: f"{x:.6f}")
@@ -182,6 +220,14 @@ def print_results(results_list):
 
 
 def run_experiments():
+    """Run sphere function optimization experiments for all algorithms.
+
+    Parameters:
+    None
+
+    Returns:
+    None
+    """
     os.makedirs("results", exist_ok=True)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     

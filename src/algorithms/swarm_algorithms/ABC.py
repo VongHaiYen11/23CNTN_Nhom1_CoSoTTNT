@@ -2,6 +2,8 @@ import numpy as np
 
 
 class ArtificialBeeColony:
+    """Artificial Bee Colony algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -15,6 +17,23 @@ class ArtificialBeeColony:
         seed=None,
         verbose=False
     ):
+        """Initialize Artificial Bee Colony algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float): Lower bound for search space
+        upper_bound (float): Upper bound for search space
+        dim (int): Problem dimension
+        num_employed_bees (int): Number of employed bees
+        num_onlooker_bees (int): Number of onlooker bees
+        max_iter (int): Maximum number of iterations
+        limit (int): Maximum trials before abandoning food source
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -30,6 +49,14 @@ class ArtificialBeeColony:
         self.food_sources = None
 
     def initialize_population(self):
+        """Initialize food sources and evaluate fitness.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (food_sources, fitness_values, no_improvement_counters, best_solution, best_fitness, fitness_history)
+        """
         food_sources = (
             self.lower_bound
             + np.random.rand(self.num_employed_bees, self.dim)
@@ -57,6 +84,16 @@ class ArtificialBeeColony:
         )
 
     def employed_bees_phase(self, food_sources, fitness_values, no_improvement_counters):
+        """Employed bees phase: explore neighborhood of food sources.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        no_improvement_counters (np.ndarray): Counters for trials without improvement
+
+        Returns:
+        None
+        """
         for i in range(self.num_employed_bees):
             k = np.random.randint(0, self.num_employed_bees)
             while k == i:
@@ -86,6 +123,14 @@ class ArtificialBeeColony:
                 no_improvement_counters[i] += 1
 
     def calculate_probabilities(self, fitness_values):
+        """Calculate selection probabilities for onlooker bees.
+
+        Parameters:
+        fitness_values (np.ndarray): Fitness values of food sources
+
+        Returns:
+        tuple: (probabilities, cumulative_probs) arrays
+        """
         inv_fit = 1.0 / (1.0 + fitness_values)
         probabilities = inv_fit / np.sum(inv_fit)
         cumulative_probs = np.cumsum(probabilities)
@@ -98,6 +143,17 @@ class ArtificialBeeColony:
         no_improvement_counters,
         cumulative_probs
     ):
+        """Onlooker bees phase: select food sources based on probability and explore.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        no_improvement_counters (np.ndarray): Counters for trials without improvement
+        cumulative_probs (np.ndarray): Cumulative probabilities for selection
+
+        Returns:
+        None
+        """
         for j in range(self.num_onlooker_bees):
             r = np.random.rand()
             i = np.searchsorted(cumulative_probs, r)
@@ -130,6 +186,16 @@ class ArtificialBeeColony:
                 no_improvement_counters[i] += 1
 
     def scout_bees_phase(self, food_sources, fitness_values, no_improvement_counters):
+        """Scout bees phase: abandon exhausted food sources and find new ones.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        no_improvement_counters (np.ndarray): Counters for trials without improvement
+
+        Returns:
+        None
+        """
         for i in range(self.num_employed_bees):
             if no_improvement_counters[i] > self.limit:
                 food_sources[i] = (
@@ -148,6 +214,18 @@ class ArtificialBeeColony:
         best_fitness,
         fitness_history
     ):
+        """Update best solution found so far.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        best_solution (np.ndarray): Current best solution
+        best_fitness (float): Current best fitness
+        fitness_history (list): History of best fitness values
+
+        Returns:
+        tuple: (best_solution, best_fitness, fitness_history)
+        """
         current_best_index = np.argmin(fitness_values)
         current_best_fitness = fitness_values[current_best_index]
 
@@ -159,6 +237,14 @@ class ArtificialBeeColony:
         return best_solution, best_fitness, fitness_history
 
     def run(self):
+        """Execute Artificial Bee Colony optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start ABC =====")
         (
@@ -205,6 +291,8 @@ class ArtificialBeeColony:
 
 
 class ArtificialBeeColonyKnapsack:
+    """Artificial Bee Colony algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -218,6 +306,23 @@ class ArtificialBeeColonyKnapsack:
         seed=None,
         verbose=False
     ):
+        """Initialize ABC for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        max_weight (float): Maximum weight capacity
+        num_employed_bees (int): Number of employed bees
+        num_onlooker_bees (int): Number of onlooker bees
+        max_iter (int): Maximum number of iterations
+        limit (int): Maximum trials before abandoning food source
+        dim (int, optional): Number of items, defaults to len(weights)
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -234,6 +339,14 @@ class ArtificialBeeColonyKnapsack:
         self.food_sources = None
 
     def initialize_population(self):
+        """Initialize food sources for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (food_sources, fitness_values, no_improvement_counters, best_solution, best_fitness, fitness_history)
+        """
         SN = self.num_employed_bees
         food_sources = np.random.randint(0, 2, size=(SN, self.num_items))
         food_sources = np.array([self.repair_solution(ind) for ind in food_sources])
@@ -260,9 +373,25 @@ class ArtificialBeeColonyKnapsack:
         )
 
     def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.max_weight
 
     def repair_solution(self, individual):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        individual (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
         ind = individual.copy()
         while not self.is_valid(ind):
             ones = np.where(ind == 1)[0]
@@ -272,9 +401,26 @@ class ArtificialBeeColonyKnapsack:
         return ind
 
     def fitness(self, individual):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        individual (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.dot(individual, self.values)
 
     def binary_mutation(self, x_i, x_k):
+        """Perform binary mutation between two solutions.
+
+        Parameters:
+        x_i (np.ndarray): First solution vector
+        x_k (np.ndarray): Second solution vector
+
+        Returns:
+        np.ndarray: Mutated and repaired solution
+        """
         mutant = x_i.copy()
         phi = np.random.uniform(-1, 1, size=self.num_items)
         diff = x_i - x_k
@@ -286,6 +432,16 @@ class ArtificialBeeColonyKnapsack:
         return self.repair_solution(mutant)
 
     def employed_bees_phase(self, food_sources, fitness_values, counters):
+        """Employed bees phase for knapsack: explore neighborhood using binary mutation.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        counters (np.ndarray): Counters for trials without improvement
+
+        Returns:
+        None
+        """
         for i in range(self.num_employed_bees):
             k = np.random.randint(0, self.num_employed_bees)
             while k == i:
@@ -302,6 +458,14 @@ class ArtificialBeeColonyKnapsack:
                 counters[i] += 1
 
     def calculate_probabilities(self, fitness_values):
+        """Calculate selection probabilities for onlooker bees (knapsack version).
+
+        Parameters:
+        fitness_values (np.ndarray): Fitness values of food sources
+
+        Returns:
+        tuple: (probabilities, cumulative) arrays
+        """
         prob = fitness_values
         prob = np.maximum(prob, 0)
         prob_sum = prob.sum()
@@ -313,6 +477,17 @@ class ArtificialBeeColonyKnapsack:
         return probabilities, cumulative
 
     def onlooker_bees_phase(self, food_sources, fitness_values, counters, cumulative):
+        """Onlooker bees phase for knapsack: select and explore based on probability.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        counters (np.ndarray): Counters for trials without improvement
+        cumulative (np.ndarray): Cumulative probabilities for selection
+
+        Returns:
+        None
+        """
         for _ in range(self.num_onlooker_bees):
             r = np.random.rand()
             i = np.searchsorted(cumulative, r)
@@ -332,6 +507,16 @@ class ArtificialBeeColonyKnapsack:
                 counters[i] += 1
 
     def scout_bees_phase(self, food_sources, fitness_values, counters):
+        """Scout bees phase for knapsack: abandon exhausted sources and find new ones.
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        counters (np.ndarray): Counters for trials without improvement
+
+        Returns:
+        None
+        """
         for i in range(self.num_employed_bees):
             if counters[i] > self.limit:
                 food_sources[i] = self.repair_solution(
@@ -341,6 +526,18 @@ class ArtificialBeeColonyKnapsack:
                 counters[i] = 0
 
     def update_best(self, food_sources, fitness_values, best_sol, best_fit, history):
+        """Update best solution found so far (knapsack version).
+
+        Parameters:
+        food_sources (np.ndarray): Current food source positions
+        fitness_values (np.ndarray): Current fitness values
+        best_sol (np.ndarray): Current best solution
+        best_fit (float): Current best fitness
+        history (list): History of best fitness values
+
+        Returns:
+        tuple: (best_sol, best_fit, history)
+        """
         current_best_idx = np.argmax(fitness_values)
         current_best_fit = fitness_values[current_best_idx]
 
@@ -352,6 +549,14 @@ class ArtificialBeeColonyKnapsack:
         return best_sol, best_fit, history
 
     def run(self):
+        """Execute ABC optimization for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start ABC Knapsack =====")
         (

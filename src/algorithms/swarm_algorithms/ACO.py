@@ -2,6 +2,8 @@ import numpy as np
 
 
 class AntColonyOptimizationContinuous:
+    """Ant Colony Optimization for continuous optimization (ACOR variant)."""
+    
     def __init__(
         self,
         fitness_func,
@@ -15,6 +17,23 @@ class AntColonyOptimizationContinuous:
         seed=None,
         verbose=False
     ):
+        """Initialize ACO for continuous optimization.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        dim (int): Problem dimension
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        population_size (int): Number of solutions to construct per iteration
+        max_iter (int): Maximum number of iterations
+        archive_size (int, optional): Size of solution archive, defaults to population_size
+        rho (float): Speed of convergence parameter
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         self.fitness_func = fitness_func
         self.dim = dim
         self.population_size = population_size
@@ -46,11 +65,27 @@ class AntColonyOptimizationContinuous:
         self.verbose = verbose
 
     def sort_archive(self):
+        """Sort archive by fitness in ascending order.
+
+        Parameters:
+        None
+
+        Returns:
+        None
+        """
         sort_indices = np.argsort(self.archive_fitness)
         self.archive = self.archive[sort_indices]
         self.archive_fitness = self.archive_fitness[sort_indices]
 
     def calculate_acor_weights(self):
+        """Calculate Gaussian weights for archive solutions.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Normalized weights for archive solutions
+        """
         k = self.archive_size
         ranks = np.arange(k)
         q = 0.05
@@ -61,6 +96,14 @@ class AntColonyOptimizationContinuous:
         return weights / np.sum(weights)
 
     def construct_solutions(self):
+        """Construct new solutions using Gaussian sampling around archive solutions.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Array of new solutions
+        """
         all_solutions = np.zeros((self.population_size, self.dim))
         for k in range(self.population_size):
             guide_idx = self.rng.choice(self.archive_size, p=self.archive_weights)
@@ -75,6 +118,15 @@ class AntColonyOptimizationContinuous:
         return all_solutions
 
     def update_archive(self, new_solutions, new_fitness):
+        """Update archive with new solutions, keeping only best ones.
+
+        Parameters:
+        new_solutions (np.ndarray): New solutions to consider
+        new_fitness (np.ndarray): Fitness values of new solutions
+
+        Returns:
+        None
+        """
         combined_solutions = np.vstack((self.archive, new_solutions))
         combined_fitness = np.concatenate((self.archive_fitness, new_fitness))
 
@@ -83,6 +135,14 @@ class AntColonyOptimizationContinuous:
         self.archive_fitness = combined_fitness[sort_indices][:self.archive_size]
 
     def run(self):
+        """Execute ACO optimization for continuous problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start ACO =====")
         self.best_solution = self.archive[0].copy()
@@ -112,6 +172,8 @@ class AntColonyOptimizationContinuous:
 
 
 class AntColonyOptimizationKnapsack:
+    """Ant Colony Optimization for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -126,6 +188,24 @@ class AntColonyOptimizationKnapsack:
         seed=None,
         verbose=True
     ):
+        """Initialize ACO for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        n_ants (int): Number of ants
+        max_iter (int): Maximum number of iterations
+        alpha (float): Pheromone importance parameter
+        beta (float): Heuristic importance parameter
+        rho (float): Evaporation rate
+        Q (float): Pheromone deposit constant
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         self.weights = np.array(weights)
         self.values = np.array(values)
         self.capacity = capacity
@@ -149,6 +229,14 @@ class AntColonyOptimizationKnapsack:
         self.history = []
 
     def fitness(self, solution):
+        """Calculate fitness (total value) of solution, returns 0 if invalid.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value if valid, 0 if weight constraint violated
+        """
         total_weight = np.sum(solution * self.weights)
         total_value = np.sum(solution * self.values)
         if total_weight > self.capacity:
@@ -156,6 +244,14 @@ class AntColonyOptimizationKnapsack:
         return total_value
 
     def probabilities(self, allowed):
+        """Calculate selection probabilities for allowed items.
+
+        Parameters:
+        allowed (np.ndarray): Indices of items that can be selected
+
+        Returns:
+        np.ndarray: Selection probabilities for allowed items
+        """
         tau_allowed = self.tau[allowed] ** self.alpha
         mu_allowed = self.mu[allowed] ** self.beta
         numerator = tau_allowed * mu_allowed
@@ -165,6 +261,14 @@ class AntColonyOptimizationKnapsack:
         return numerator / denom
 
     def construct_solution(self):
+        """Construct solution using pheromone and heuristic information.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (solution, fitness) where solution is binary vector
+        """
         solution = np.zeros(self.n_items, dtype=int)
         current_weight = 0
         available = np.arange(self.n_items)
@@ -187,6 +291,15 @@ class AntColonyOptimizationKnapsack:
         return solution, fitness
 
     def update_pheromone(self, all_solutions, all_fitness):
+        """Update pheromone trails based on solution quality.
+
+        Parameters:
+        all_solutions (list): List of solution vectors
+        all_fitness (np.ndarray): Fitness values of solutions
+
+        Returns:
+        None
+        """
         self.tau *= (1 - self.rho)
 
         for sol, fit in zip(all_solutions, all_fitness):
@@ -195,6 +308,14 @@ class AntColonyOptimizationKnapsack:
                 self.tau += delta_tau * sol
 
     def run(self):
+        """Execute ACO optimization for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start ACO Knapsack =====")
         for it in range(1, self.max_iter + 1):

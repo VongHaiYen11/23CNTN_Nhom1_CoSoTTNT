@@ -2,6 +2,8 @@ import numpy as np
 
 
 class HillClimbing:
+    """Hill Climbing algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -13,6 +15,21 @@ class HillClimbing:
         seed=None,
         verbose=False
     ):
+        """Initialize Hill Climbing algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        dim (int): Problem dimension
+        max_iter (int): Maximum number of iterations
+        n_neighbors (int): Number of neighbors to generate per iteration
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -29,6 +46,14 @@ class HillClimbing:
         self.history = []
 
     def generate_neighbors(self, solution):
+        """Generate neighboring solutions around current solution.
+
+        Parameters:
+        solution (np.ndarray): Current solution vector
+
+        Returns:
+        np.ndarray: Array of neighbor solutions
+        """
         step = (self.upper_bound - self.lower_bound) * 0.1
         perturbations = np.random.uniform(
             -step,
@@ -43,6 +68,14 @@ class HillClimbing:
         return neighbors
 
     def run(self):
+        """Execute Hill Climbing optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start HC =====")
         current_solution = np.random.uniform(
@@ -81,6 +114,8 @@ class HillClimbing:
 
 
 class HillClimbingKnapsack:
+    """Hill Climbing algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -92,6 +127,21 @@ class HillClimbingKnapsack:
         seed=None,
         verbose=False
     ):
+        """Initialize Hill Climbing for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        dim (int, optional): Number of items, defaults to len(weights)
+        max_iter (int): Maximum number of iterations
+        n_neighbors (int): Number of neighbors to generate per iteration
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -108,12 +158,36 @@ class HillClimbingKnapsack:
         self.history = []
 
     def fitness(self, solution):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(solution * self.values)
 
     def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.capacity
 
     def repair(self, sol):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        sol (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
         while not self.is_valid(sol):
             ones = np.where(sol == 1)[0]
             if len(ones) == 0:
@@ -122,6 +196,14 @@ class HillClimbingKnapsack:
         return sol
 
     def generate_neighbors(self, solution):
+        """Generate neighboring solutions by flipping bits (knapsack version).
+
+        Parameters:
+        solution (np.ndarray): Current binary solution vector
+
+        Returns:
+        list: List of valid neighbor solutions
+        """
         neighbors = []
         for _ in range(self.n_neighbors):
             neighbor = solution.copy()
@@ -133,6 +215,14 @@ class HillClimbingKnapsack:
         return neighbors
 
     def run(self):
+        """Execute Hill Climbing for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start HC Knapsack =====")
         self.best_solution = np.zeros(self.dim, dtype=int)

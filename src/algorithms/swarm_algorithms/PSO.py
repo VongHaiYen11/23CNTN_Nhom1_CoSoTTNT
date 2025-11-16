@@ -2,6 +2,8 @@ import numpy as np
 
 
 class ParticleSwarmOptimization:
+    """Particle Swarm Optimization algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -16,6 +18,24 @@ class ParticleSwarmOptimization:
         seed=None,
         verbose=False
     ):
+        """Initialize Particle Swarm Optimization algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        dim (int): Problem dimension
+        population_size (int): Number of particles in the swarm
+        max_iter (int): Maximum number of iterations
+        w (float): Inertia weight
+        c1 (float): Cognitive coefficient
+        c2 (float): Social coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -36,9 +56,27 @@ class ParticleSwarmOptimization:
         self.history = []
 
     def simple_bounds(self, x):
+        """Clip solution to bounds.
+
+        Parameters:
+        x (np.ndarray): Solution vector
+
+        Returns:
+        np.ndarray: Clipped solution vector
+        """
         return np.clip(x, self.lower_bound, self.upper_bound)
 
     def update_personal_best(self, positions, pbest, pbest_values):
+        """Update personal best positions and values for all particles.
+
+        Parameters:
+        positions (np.ndarray): Current particle positions
+        pbest (np.ndarray): Personal best positions
+        pbest_values (np.ndarray): Personal best fitness values
+
+        Returns:
+        tuple: Updated pbest and pbest_values
+        """
         for i in range(self.population_size):
             fitness = self.fitness_func(positions[i])
             if fitness < pbest_values[i]:
@@ -47,6 +85,17 @@ class ParticleSwarmOptimization:
         return pbest, pbest_values
 
     def update_global_best(self, pbest, pbest_values, gbest, gbest_value):
+        """Update global best solution.
+
+        Parameters:
+        pbest (np.ndarray): Personal best positions
+        pbest_values (np.ndarray): Personal best fitness values
+        gbest (np.ndarray): Current global best position
+        gbest_value (float): Current global best fitness
+
+        Returns:
+        tuple: Updated gbest and gbest_value
+        """
         best_idx = np.argmin(pbest_values)
         if pbest_values[best_idx] < gbest_value:
             gbest = pbest[best_idx].copy()
@@ -54,6 +103,17 @@ class ParticleSwarmOptimization:
         return gbest, gbest_value
 
     def update_velocity(self, velocities, positions, pbest, gbest):
+        """Update particle velocities using PSO velocity equation.
+
+        Parameters:
+        velocities (np.ndarray): Current particle velocities
+        positions (np.ndarray): Current particle positions
+        pbest (np.ndarray): Personal best positions
+        gbest (np.ndarray): Global best position
+
+        Returns:
+        np.ndarray: Updated velocities
+        """
         r1 = np.random.rand(self.population_size, self.dim)
         r2 = np.random.rand(self.population_size, self.dim)
         new_velocities = (
@@ -64,10 +124,27 @@ class ParticleSwarmOptimization:
         return new_velocities
 
     def update_position(self, positions, velocities):
+        """Update particle positions and clip to bounds.
+
+        Parameters:
+        positions (np.ndarray): Current particle positions
+        velocities (np.ndarray): Updated velocities
+
+        Returns:
+        np.ndarray: Updated positions clipped to bounds
+        """
         new_positions = positions + velocities
         return self.simple_bounds(new_positions)
 
     def run(self):
+        """Execute PSO optimization algorithm.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start PSO =====")
         rng = np.random.default_rng(self.seed)
@@ -105,6 +182,8 @@ class ParticleSwarmOptimization:
 
 
 class ParitcleSwarmKnapsack:
+    """Particle Swarm Optimization algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -119,6 +198,24 @@ class ParitcleSwarmKnapsack:
         seed=None,
         verbose=True
     ):
+        """Initialize PSO for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        dim (int, optional): Number of items, defaults to len(weights)
+        population_size (int): Number of particles in the swarm
+        max_iter (int): Maximum number of iterations
+        w (float): Inertia weight
+        c1 (float): Cognitive coefficient
+        c2 (float): Social coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -140,9 +237,25 @@ class ParitcleSwarmKnapsack:
         self.history = []
 
     def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.capacity
 
     def repair(self, sol):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        sol (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
         while not self.is_valid(sol):
             ones = np.where(sol == 1)[0]
             if len(ones) == 0:
@@ -151,19 +264,51 @@ class ParitcleSwarmKnapsack:
         return sol
 
     def fitness(self, solution):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(solution * self.values)
 
     def sigmoid_solution(self, x):
+        """Convert continuous position to binary solution using sigmoid function.
+
+        Parameters:
+        x (np.ndarray): Continuous position vector
+
+        Returns:
+        np.ndarray: Binary solution vector
+        """
         s = 1 / (1 + np.exp(-x))
         sol = (s > 0.5).astype(int)
         return self.repair(sol)
 
     def initialize_population(self):
+        """Initialize particle positions and velocities.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (positions, velocities) arrays
+        """
         positions = np.random.uniform(-4, 4, (self.population_size, self.dim))
         velocities = np.zeros((self.population_size, self.dim))
         return positions, velocities
 
     def run(self):
+        """Execute PSO optimization for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start PSO Knapsack =====")
         positions, velocities = self.initialize_population()

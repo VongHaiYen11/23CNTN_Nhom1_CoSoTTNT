@@ -1,6 +1,5 @@
 import numpy as np
 
-# Test case 1: 5 items
 TEST_CASE_5 = {
     'name': 'test_case_5',
     'weights': np.array([4, 3, 6, 5, 7]),
@@ -9,7 +8,6 @@ TEST_CASE_5 = {
     'n_items': 5
 }
 
-# Test case 2: 10 items
 TEST_CASE_10 = {
     'name': 'test_case_10',
     'weights': np.array([10,2,5,12,6,7,11,20,3,9]),
@@ -18,7 +16,6 @@ TEST_CASE_10 = {
     'n_items': 10
 }
 
-# Test case 3: 20 items
 TEST_CASE_20 = {
     'name': 'test_case_20',
     'weights': np.array([18,4,3,20,9,30,5,10,12,7, 15,2,25,14,1,19,8,11,22,6]),
@@ -27,7 +24,6 @@ TEST_CASE_20 = {
     'n_items': 20
 }
 
-# Test case 4: 30 items
 TEST_CASE_30 = {
     'name': 'test_case_30',
     'weights': np.array([3,4,5,6,7,4,5,6,7,8,3,4,5,6,7,4,5,6,7,8,3,4,5,6,7,4,5,6,7,8]),
@@ -36,7 +32,6 @@ TEST_CASE_30 = {
     'n_items': 30
 }
 
-# Combine all test cases
 TEST_CASES = {
     'test_case_5': TEST_CASE_5,
     'test_case_10': TEST_CASE_10,
@@ -45,7 +40,7 @@ TEST_CASES = {
 }
 
 # Default test case
-WEIGHTS = TEST_CASE_5['weights']
-VALUES = TEST_CASE_5['values']
-MAX_WEIGHT = TEST_CASE_5['max_weight']
-N_ITEMS = TEST_CASE_5['n_items']
+WEIGHTS = TEST_CASE_20['weights']
+VALUES = TEST_CASE_20['values']
+MAX_WEIGHT = TEST_CASE_20['max_weight']
+N_ITEMS = TEST_CASE_20['n_items']

@@ -2,6 +2,8 @@ import numpy as np
 import math
 
 class CuckooSearch:
+    """Cuckoo Search algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -16,6 +18,24 @@ class CuckooSearch:
         seed=None,
         verbose=False
     ):
+        """Initialize Cuckoo Search algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        dim (int): Problem dimension
+        population_size (int): Number of nests
+        pa (float): Probability of abandoning worst nests
+        alpha (float): Step size scaling factor
+        beta (float): Levy flight parameter
+        max_iter (int): Maximum number of iterations
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -46,6 +66,16 @@ class CuckooSearch:
         return step
 
     def get_best_nest(self, nests, new_nests, fitness):
+        """Update nests with better solutions and return best nest.
+
+        Parameters:
+        nests (np.ndarray): Current nest positions
+        new_nests (np.ndarray): New nest positions
+        fitness (np.ndarray): Current fitness values
+
+        Returns:
+        tuple: (updated_nests, updated_fitness, best_nest, best_fitness)
+        """
         new_fitness = np.array([self.fitness_func(x) for x in new_nests])
         improved = new_fitness < fitness
         fitness[improved] = new_fitness[improved]
@@ -54,6 +84,14 @@ class CuckooSearch:
         return nests, fitness, nests[best_idx], fitness[best_idx]
 
     def empty_nests(self, nests):
+        """Abandon worst nests and generate new ones.
+
+        Parameters:
+        nests (np.ndarray): Current nest positions
+
+        Returns:
+        np.ndarray: New nest positions after abandonment
+        """
         n = self.population_size
         K = np.random.rand(n, self.dim) > self.pa
         perm1 = np.random.permutation(n)
@@ -74,6 +112,14 @@ class CuckooSearch:
         return new_nests
 
     def run(self):
+        """Execute Cuckoo Search optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start Cuckoo =====")
         n = self.population_size
@@ -113,6 +159,8 @@ class CuckooSearch:
 
 
 class CuckooSearchKnapsack:
+    """Cuckoo Search algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -127,6 +175,24 @@ class CuckooSearchKnapsack:
         seed=None,
         verbose=True
     ):
+        """Initialize Cuckoo Search for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        dim (int, optional): Number of items, defaults to len(weights)
+        population_size (int): Number of nests
+        pa (float): Probability of abandoning worst nests
+        alpha (float): Step size scaling factor
+        beta (float): Levy flight parameter
+        max_iter (int): Maximum number of iterations
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -146,21 +212,61 @@ class CuckooSearchKnapsack:
         self.history = []
 
     def fitness(self, solution):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(solution * self.values)
 
     def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.capacity
 
     def get_random_nest(self):
+        """Generate random valid nest (solution).
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Random valid binary solution
+        """
         while True:
             nest = np.random.randint(0, 2, size=self.dim)
             if self.is_valid(nest):
                 return nest
 
     def initialize_population(self):
+        """Initialize population with random valid nests.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Array of valid binary solutions
+        """
         return np.array([self.get_random_nest() for _ in range(self.population_size)])
 
     def levy_flight(self):
+        """Generate Levy flight step for knapsack.
+
+        Parameters:
+        None
+
+        Returns:
+        np.ndarray: Levy flight step vector
+        """
         beta = self.beta
         sigma = (
             (math.gamma(1 + beta) * math.sin(math.pi * beta / 2))
@@ -172,6 +278,14 @@ class CuckooSearchKnapsack:
         return step
 
     def repair(self, sol):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        sol (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
         while not self.is_valid(sol):
             ones = np.where(sol == 1)[0]
             if len(ones) == 0:
@@ -180,11 +294,29 @@ class CuckooSearchKnapsack:
         return sol
 
     def sigmoid_solution(self, x):
+        """Convert continuous position to binary solution using sigmoid function.
+
+        Parameters:
+        x (np.ndarray): Continuous position vector
+
+        Returns:
+        np.ndarray: Binary solution vector
+        """
         s = 1 / (1 + np.exp(-x))
         sol = (s > 0.5).astype(int)
         return sol
 
     def get_best_nest(self, nests, new_nests, fitness):
+        """Update nests with better solutions and return best nest (knapsack version).
+
+        Parameters:
+        nests (np.ndarray): Current nest positions
+        new_nests (np.ndarray): New nest positions
+        fitness (np.ndarray): Current fitness values
+
+        Returns:
+        tuple: (updated_nests, updated_fitness, best_nest, best_fitness)
+        """
         new_fitness = np.array([self.fitness(x) for x in new_nests])
         improved = new_fitness > fitness
         for i in range(self.population_size):
@@ -195,6 +327,14 @@ class CuckooSearchKnapsack:
         return nests, fitness, nests[best_idx].copy(), fitness[best_idx]
 
     def empty_nests(self, nests):
+        """Abandon worst nests and generate new valid ones (knapsack version).
+
+        Parameters:
+        nests (np.ndarray): Current nest positions
+
+        Returns:
+        np.ndarray: New nest positions after abandonment
+        """
         new_nests = nests.copy()
         for i in range(self.population_size):
             if np.random.rand() < self.pa:
@@ -202,6 +342,15 @@ class CuckooSearchKnapsack:
         return new_nests
 
     def get_cuckoos(self, nests, best):
+        """Generate new solutions using Levy flight for knapsack.
+
+        Parameters:
+        nests (np.ndarray): Current nest positions
+        best (np.ndarray): Best nest position
+
+        Returns:
+        np.ndarray: New nest positions after Levy flight and repair
+        """
         n = self.population_size
         new_nests = nests.copy()
         for j in range(n):
@@ -214,6 +363,14 @@ class CuckooSearchKnapsack:
         return new_nests
 
     def run(self):
+        """Execute Cuckoo Search for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
         if self.verbose:
             print("\n===== Start Cuckoo Knapsack =====")
         nests = self.initialize_population()
