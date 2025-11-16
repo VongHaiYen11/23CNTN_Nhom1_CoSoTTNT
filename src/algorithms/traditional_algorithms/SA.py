@@ -30,6 +30,19 @@ class SimulatedAnnealing:
         self.best_fitness = None
         self.history = []
 
+    def generate_neighbor(self, solution):
+        perturbation = np.random.uniform(
+            -self.step_size,
+            self.step_size,
+            size=self.dim
+        )
+        neighbor = np.clip(
+            solution + perturbation,
+            self.lower_bound,
+            self.upper_bound
+        )
+        return neighbor
+
     def run(self):
         if self.verbose:
             print("\n===== Start SA =====")
@@ -47,16 +60,7 @@ class SimulatedAnnealing:
             temp = self.initial_temp * (1 - i / self.max_iter)
             temp = max(temp, 1e-8)
 
-            perturbation = np.random.uniform(
-                -self.step_size,
-                self.step_size,
-                size=self.dim
-            )
-            candidate = np.clip(
-                current_solution + perturbation,
-                self.lower_bound,
-                self.upper_bound
-            )
+            candidate = self.generate_neighbor(current_solution)
             candidate_fitness = self.fitness_func(candidate)
 
             accept = (
@@ -128,13 +132,12 @@ class SimulatedAnnealingKnapsack:
         return sol
 
     def generate_neighbor(self, solution):
-        while True:
-            neighbor = solution.copy()
-            for i in range(self.dim):
-                if np.random.rand() < self.step_size:
-                    neighbor[i] = 1 - neighbor[i]
-            if self.is_valid(neighbor):
-                return neighbor
+        neighbor = solution.copy()
+        i = np.random.randint(0, self.dim)
+        neighbor[i] = 1 - neighbor[i]
+        if not self.is_valid(neighbor):
+            neighbor = self.repair(neighbor)
+        return neighbor
 
     def run(self):
         if self.verbose:
