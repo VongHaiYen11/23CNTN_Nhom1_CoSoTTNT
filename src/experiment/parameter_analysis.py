@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import sys
 import random
+import matplotlib.pyplot as plt
 
 from src.algorithms.swarm_algorithms.Cuckoo import CuckooSearch
 from src.algorithms.swarm_algorithms.FA import FireflyAlgorithm
@@ -13,7 +14,7 @@ from src.algorithms.swarm_algorithms.ACO import AntColonyOptimizationContinuous
 from src.problem.continuous.sphere import sphere
 
 # Experiment settings
-N_RUNS = 1  # Number of runs per parameter value
+N_RUNS = 1  # 1 nên là besfitness, hiện mean_fitness nhưng mà mean của 1 thì là best
 DIM = 30
 POP_SIZE = 50
 MAX_ITERATIONS = 200
@@ -240,27 +241,18 @@ def analyze_parameter(algo_name, param_name, param_values):
     results = []
     
     for param_value in param_values:
-        fitnesses = []
+        # Run once (N_RUNS = 1)
+        seed = SEED
+        best_fit = run_parameter_experiment(algo_name, param_name, param_value, seed)
         
-        for run in range(N_RUNS):
-            seed = SEED + run  # Different seed for each run
-            best_fit = run_parameter_experiment(algo_name, param_name, param_value, seed)
-            if best_fit is not None:
-                fitnesses.append(best_fit)
-        
-        if fitnesses:
-            mean_fitness = np.mean(fitnesses)
-            std_fitness = np.std(fitnesses)
+        if best_fit is not None:
             results.append({
                 'algorithm_name': algo_name,
                 'parameter_name': param_name,
                 'parameter_value': param_value,
-                'best_fitness': mean_fitness,
-                'std_fitness': std_fitness,
-                'min_fitness': np.min(fitnesses),
-                'max_fitness': np.max(fitnesses)
+                'best_fitness': best_fit
             })
-            print(f"  {param_name}={param_value:.4f}: Mean Fitness = {mean_fitness:.6e}")
+            print(f"  {param_name}={param_value:.4f}: Best Fitness = {best_fit:.6e}")
     
     return results
 
@@ -326,6 +318,118 @@ def run_all_parameter_analysis():
     return df
 
 
+def plot_parameter_analysis(df, save_dir='src/visualization/parameter'):
+    """
+    Generate visualization plots for each hyperparameter.
+    
+    Args:
+        df: DataFrame containing parameter analysis results
+        save_dir: Directory to save the plots (default: src/visualization/parameter)
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Color palette for different algorithms
+    colors = {
+        'FA': '#FF6B6B',
+        'ABC': '#4ECDC4',
+        'Cuckoo': '#45B7D1',
+        'PSO': '#FFA07A',
+        'ACO': '#85C1E2'
+    }
+    
+    # Get unique algorithm-parameter combinations
+    unique_combinations = df[['algorithm_name', 'parameter_name']].drop_duplicates()
+    
+    print("\n" + "=" * 80)
+    print("Generating Parameter Analysis Visualizations")
+    print("=" * 80)
+    
+    for _, row in unique_combinations.iterrows():
+        algo_name = row['algorithm_name']
+        param_name = row['parameter_name']
+        
+        # Filter data for this algorithm and parameter
+        param_data = df[(df['algorithm_name'] == algo_name) & 
+                       (df['parameter_name'] == param_name)].copy()
+        
+        # Sort by parameter value
+        param_data = param_data.sort_values('parameter_value')
+        
+        # Create plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Plot line with markers
+        color = colors.get(algo_name, '#95A5A6')
+        ax.plot(param_data['parameter_value'], param_data['best_fitness'], 
+               marker='o', linewidth=2.5, markersize=8, color=color, 
+               label=algo_name, alpha=0.8)
+        
+        # Add grid
+        ax.grid(True, alpha=0.3, linestyle='--')
+        
+        # Set labels and title
+        ax.set_xlabel(f'{param_name}', fontsize=13, fontweight='bold')
+        ax.set_ylabel('Best Fitness', fontsize=13, fontweight='bold')
+        ax.set_title(f'Parameter Analysis: {algo_name} - {param_name}', 
+                    fontsize=14, fontweight='bold', pad=15)
+        
+        # Add padding to y-axis
+        y_min = param_data['best_fitness'].min()
+        y_max = param_data['best_fitness'].max()
+        
+        # Use log scale for y-axis if fitness values span large range
+        use_log_scale = False
+        if y_min > 0:
+            fitness_ratio = y_max / y_min
+            if fitness_ratio > 100:
+                ax.set_yscale('log')
+                use_log_scale = True
+        
+        # Add legend
+        ax.legend(loc='best', fontsize=11, framealpha=0.9)
+        
+        # Set y-axis limits
+        if use_log_scale:
+            ax.set_ylim(y_min / 1.5, y_max * 1.5)
+        else:
+            y_padding = (y_max - y_min) * 0.15 if y_max > y_min else y_max * 0.15
+            ax.set_ylim(max(0, y_min - y_padding), y_max + y_padding)
+        
+        plt.tight_layout()
+        
+        # Save plot
+        filename = f'{algo_name}_{param_name}_analysis.png'
+        save_path = os.path.join(save_dir, filename)
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"Saved: {filename}")
+    
+    print("=" * 80)
+    print("All visualizations generated successfully!")
+    print("=" * 80)
+
+
+def visualize_parameter_analysis_from_csv(csv_path, save_dir='src/visualization/parameter'):
+    """
+    Generate visualizations from an existing parameter analysis CSV file.
+    
+    Args:
+        csv_path: Path to the parameter analysis CSV file
+        save_dir: Directory to save the plots (default: src/visualization/parameter)
+    """
+    df = pd.read_csv(csv_path)
+    
+    # Handle both old and new column names for backward compatibility
+    if 'mean_fitness' in df.columns and 'best_fitness' not in df.columns:
+        df['best_fitness'] = df['mean_fitness']
+    
+    plot_parameter_analysis(df, save_dir)
+
+
 if __name__ == "__main__":
-    run_all_parameter_analysis()
+    df = run_all_parameter_analysis()
+    
+    # Generate visualizations
+    print("\n")
+    plot_parameter_analysis(df)
 
