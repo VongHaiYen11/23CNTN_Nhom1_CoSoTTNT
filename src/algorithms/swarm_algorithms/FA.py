@@ -11,7 +11,7 @@ class FireflyAlgorithm:
         population_size=100,
         max_iter=500,
         alpha=0.5,
-        beta0=1.0,
+        beta=1.0,
         gamma=0.01,
         seed=None,
         verbose=False
@@ -27,7 +27,7 @@ class FireflyAlgorithm:
         self.population_size = population_size
         self.max_iter = max_iter
         self.alpha = alpha
-        self.beta0 = beta0
+        self.beta = beta
         self.gamma = gamma
         self.verbose = verbose
 
@@ -60,7 +60,7 @@ class FireflyAlgorithm:
                 if intensity[j] < intensity[i]:
                     r2 = np.sum((fireflies[i] - fireflies[j]) ** 2)
 
-                    beta = self.beta0 * np.exp(-self.gamma * r2)
+                    beta = self.beta * np.exp(-self.gamma * r2)
 
                     random_step = (
                         alpha
@@ -141,7 +141,7 @@ class FireflyKnapsack:
         population_size=100,
         max_iter=200,
         alpha=0.2,
-        beta0=1.0,
+        beta=1.0,
         gamma=0.01,
         seed=None,
         verbose=False
@@ -153,7 +153,7 @@ class FireflyKnapsack:
         self.population_size = population_size
         self.max_iter = max_iter
         self.alpha = alpha
-        self.beta0 = beta0
+        self.beta = beta
         self.gamma = gamma
         self.verbose = verbose
 
@@ -221,7 +221,7 @@ class FireflyKnapsack:
             return
 
         r = self.hamming_distance(self.fireflies[i], self.fireflies[j])
-        beta = self.beta0 * np.exp(-self.gamma * r)
+        beta = self.beta * np.exp(-self.gamma * r)
 
         if np.random.rand() < beta:
             child = self.crossover(self.fireflies[i], self.fireflies[j])
