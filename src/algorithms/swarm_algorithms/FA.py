@@ -1,104 +1,139 @@
 import numpy as np
 
+
 class FireflyAlgorithm:
+    """Firefly Algorithm for continuous optimization."""
+    
     def __init__(
         self,
-        objective_function,
+        fitness_func,
         lower_bound=-5.12,
         upper_bound=5.12,
-        dimension=30,
+        dim=30,
         population_size=100,
-        max_iterations=200,
-        alpha=0.5,      # Mức độ ngẫu nhiên ban đầu
-        beta0=1.0,      # Độ hấp dẫn khi khoảng cách = 0
-        gamma=0.01,     # Hệ số hấp thụ ánh sáng
-        seed=None
-        
+        max_iter=500,
+        alpha=0.5,
+        beta=1.0,
+        gamma=0.01,
+        seed=None,
+        verbose=False
     ):
-        """
-        Khởi tạo class FireflyAlgorithm với các tham số cần thiết.
-        
-        :param objective_function: Hàm mục tiêu (minimization).
-        :param lower_bound: Giới hạn dưới của không gian tìm kiếm.
-        :param upper_bound: Giới hạn trên của không gian tìm kiếm.
-        :param dimension: Kích thước vấn đề (số chiều).
-        :param population_size: Số lượng đom đóm.
-        :param max_iterations: Số lượng vòng lặp tối đa.
-        :param alpha: Mức độ ngẫu nhiên ban đầu (sẽ giảm dần).
-        :param beta0: Độ hấp dẫn cơ bản.
-        :param gamma: Hệ số hấp thụ ánh sáng.
-        :param seed: Seed cho random để reproducible.
-        """
+        """Initialize Firefly Algorithm.
 
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float): Lower bound for search space
+        upper_bound (float): Upper bound for search space
+        dim (int): Problem dimension
+        population_size (int): Number of fireflies
+        max_iter (int): Maximum number of iterations
+        alpha (float): Randomness parameter
+        beta (float): Attractiveness at distance 0
+        gamma (float): Light absorption coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         self.fireflies = None
         if seed is not None:
             np.random.seed(seed)
 
-        self.objective_function = objective_function
+        self.fitness_func = fitness_func
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
-        self.dimension = dimension
+        self.dim = dim
         self.population_size = population_size
-        self.max_iterations = max_iterations
+        self.max_iter = max_iter
         self.alpha = alpha
-        self.beta0 = beta0
+        self.beta = beta
         self.gamma = gamma
+        self.verbose = verbose
 
-    def _initialize_population(self):
-        """
-        Khởi tạo quần thể đom đóm ban đầu.
-        
-        :return: fireflies, intensity, best_solution, best_fitness, fitness_history
-        """
-        fireflies = self.lower_bound + (self.upper_bound - self.lower_bound) * np.random.rand(self.population_size, self.dimension)
-        intensity = np.apply_along_axis(self.objective_function, 1, fireflies)
+        self.best_solution = None
+        self.best_fitness = None
+        self.history = []
 
-        # Lưu nghiệm tốt nhất ban đầu
+    def initialize_population(self):
+        """Initialize firefly population and evaluate fitness.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (fireflies, intensity, best_solution, best_fitness, fitness_history)
+        """
+        fireflies = (
+            self.lower_bound
+            + (self.upper_bound - self.lower_bound)
+            * np.random.rand(self.population_size, self.dim)
+        )
+        intensity = np.apply_along_axis(self.fitness_func, 1, fireflies)
+
         best_idx = np.argmin(intensity)
         best_solution = np.copy(fireflies[best_idx])
         best_fitness = intensity[best_idx]
         fitness_history = [best_fitness]
 
         self.fireflies = fireflies
+        self.best_solution = best_solution
+        self.best_fitness = best_fitness
+        self.history = fitness_history
         return fireflies, intensity, best_solution, best_fitness, fitness_history
 
-    def _move_fireflies(self, fireflies, intensity, alpha):
-        """
-        Pha di chuyển đom đóm: Mỗi đom đóm i di chuyển về j nếu j sáng hơn (intensity thấp hơn).
-        
-        :param fireflies: Ma trận vị trí đom đóm.
-        :param intensity: Mảng độ sáng (fitness).
-        :param alpha: Mức độ ngẫu nhiên hiện tại.
+    def move_fireflies(self, fireflies, intensity, alpha):
+        """Move fireflies towards brighter ones based on attractiveness.
+
+        Parameters:
+        fireflies (np.ndarray): Current firefly positions
+        intensity (np.ndarray): Current fitness values (intensity)
+        alpha (float): Randomness parameter
+
+        Returns:
+        None
         """
         for i in range(self.population_size):
             for j in range(self.population_size):
-                if intensity[j] < intensity[i]:  # j sáng hơn i
-                    # Tính khoảng cách bình phương
+                if intensity[j] < intensity[i]:
                     r2 = np.sum((fireflies[i] - fireflies[j]) ** 2)
 
-                    # Tính độ hấp dẫn beta theo khoảng cách
-                    beta = self.beta0 * np.exp(-self.gamma * r2)
+                    beta = self.beta * np.exp(-self.gamma * r2)
 
-                    # Cập nhật vị trí
-                    random_step = alpha * (np.random.uniform(-0.5, 0.5, self.dimension)) * (self.upper_bound - self.lower_bound)
+                    random_step = (
+                        alpha
+                        * (np.random.uniform(-0.5, 0.5, self.dim))
+                        * (self.upper_bound - self.lower_bound)
+                    )
                     fireflies[i] += beta * (fireflies[j] - fireflies[i]) + random_step
 
-                    # Giữ trong biên
-                    fireflies[i] = np.clip(fireflies[i], self.lower_bound, self.upper_bound)
+                    fireflies[i] = np.clip(
+                        fireflies[i],
+                        self.lower_bound,
+                        self.upper_bound
+                    )
 
-                    # Cập nhật độ sáng mới
-                    intensity[i] = self.objective_function(fireflies[i])
+                    intensity[i] = self.fitness_func(fireflies[i])
 
-    def _update_best_solution(self, fireflies, intensity, best_solution, best_fitness, fitness_history):
-        """
-        Cập nhật nghiệm tốt nhất toàn cục.
-        
-        :param fireflies: Ma trận vị trí đom đóm.
-        :param intensity: Mảng độ sáng (fitness).
-        :param best_solution: Nghiệm tốt nhất hiện tại.
-        :param best_fitness: Fitness tốt nhất hiện tại.
-        :param fitness_history: Lịch sử fitness.
-        :return: best_solution, best_fitness, fitness_history (cập nhật)
+    def update_best_solution(
+        self,
+        fireflies,
+        intensity,
+        best_solution,
+        best_fitness,
+        fitness_history
+    ):
+        """Update best solution found so far.
+
+        Parameters:
+        fireflies (np.ndarray): Current firefly positions
+        intensity (np.ndarray): Current fitness values
+        best_solution (np.ndarray): Current best solution
+        best_fitness (float): Current best fitness
+        fitness_history (list): History of best fitness values
+
+        Returns:
+        tuple: (best_solution, best_fitness, fitness_history)
         """
         current_best_idx = np.argmin(intensity)
         current_best_fitness = intensity[current_best_idx]
@@ -111,199 +146,280 @@ class FireflyAlgorithm:
         return best_solution, best_fitness, fitness_history
 
     def run(self):
+        """Execute Firefly Algorithm optimization.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
         """
-        Chạy thuật toán FA chính: Khởi tạo và lặp qua các pha di chuyển.
-        
-        :return: best_solution, best_fitness, fitness_history
-        """
-        fireflies, intensity, best_solution, best_fitness, fitness_history = self._initialize_population()
-        alpha = self.alpha  # Sao chép để giảm dần mà không thay đổi init
+        if self.verbose:
+            print("\n===== Start FA =====")
+        (
+            fireflies,
+            intensity,
+            best_solution,
+            best_fitness,
+            fitness_history
+        ) = self.initialize_population()
+        alpha = self.alpha
 
-        for iteration in range(self.max_iterations):
-            alpha *= 0.97  # Giảm dần mức độ ngẫu nhiên theo iteration
+        for iteration in range(self.max_iter):
+            alpha *= 0.97
 
-            self._move_fireflies(fireflies, intensity, alpha)
+            self.move_fireflies(fireflies, intensity, alpha)
 
-            best_solution, best_fitness, fitness_history = self._update_best_solution(
-                fireflies, intensity, best_solution, best_fitness, fitness_history
+            self.best_solution, self.best_fitness, self.history = self.update_best_solution(
+                fireflies,
+                intensity,
+                self.best_solution,
+                self.best_fitness,
+                self.history
             )
 
-        self.fireflies = fireflies
-        print("\n--- Optimization Results (FA) ---")
-        # print(f"Best Fitness: {best_fitness}")
-        # print(f"Best Solution: {best_solution}")
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
 
-        return best_solution, best_fitness, fitness_history
-    
-#########################################
-# Firefly Algorithm cho Knapsack Problem
-#########################################
+        self.fireflies = fireflies
+        if self.verbose:
+            print("--- Optimization Results (FA) ---")
+            print(f"Best Fitness: {self.best_fitness:.6f}")
+            print(f"Best Solution: {self.best_solution}")
+
+        return self.best_solution, self.best_fitness, self.history
+
 
 class FireflyKnapsack:
+    """Firefly Algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
         values,
         max_weight,
         population_size=100,
-        max_iterations=200,
-        alpha=0.2,      # Xác suất mutation
-        beta0=1.0,      # Độ hấp dẫn cơ bản
-        gamma=0.01,     # Hệ số giảm độ hấp dẫn theo khoảng cách Hamming
-        seed=None
+        max_iter=200,
+        alpha=0.2,
+        beta=1.0,
+        gamma=0.01,
+        seed=None,
+        verbose=False
     ):
-        """
-        Firefly Algorithm cho 0/1 Knapsack (discrete).
-        
-        :param weights: List/array trọng lượng các item
-        :param values: List/array giá trị các item
-        :param max_weight: Trọng lượng tối đa của ba lô
-        :param population_size: Số đom đóm
-        :param max_iterations: Số vòng lặp
-        :param alpha: Tỷ lệ mutation
-        :param beta0: Độ hấp dẫn cơ bản
-        :param gamma: Hệ số hấp thụ (dựa trên khoảng cách Hamming)
-        :param seed: Reproducibility
+        """Initialize Firefly Algorithm for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        max_weight (float): Maximum weight capacity
+        population_size (int): Number of fireflies
+        max_iter (int): Maximum number of iterations
+        alpha (float): Mutation rate
+        beta (float): Attractiveness at distance 0
+        gamma (float): Light absorption coefficient
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
         """
         self.weights = np.array(weights)
         self.values = np.array(values)
         self.max_weight = max_weight
         self.n_items = len(weights)
         self.population_size = population_size
-        self.max_iterations = max_iterations
+        self.max_iter = max_iter
         self.alpha = alpha
-        self.beta0 = beta0
+        self.beta = beta
         self.gamma = gamma
-        
-        self.fireflies = None  # binary solutions
-        self.fitness = None    # tổng giá trị (maximize)
-        
+        self.verbose = verbose
+
+        self.fireflies = None
+        self.fitness = None
+
+        self.best_solution = None
+        self.best_fitness = 0
+        self.history = []
+
         if seed is not None:
             np.random.seed(seed)
 
-    def _initialize_population(self):
+    def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
         """
-        Khởi tạo ngẫu nhiên các giải pháp binary (0/1)
+        return np.sum(solution * self.weights) <= self.max_weight
+
+    def initialize_population(self):
+        """Initialize firefly population for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (fireflies, fitness, best_solution, best_fitness, fitness_history)
         """
         fireflies = np.random.randint(0, 2, size=(self.population_size, self.n_items))
-        fitness = np.array([self._evaluate(sol) for sol in fireflies])
-        
+        fitness = np.array([self.evaluate(self.repair(sol)) for sol in fireflies])
+
         best_idx = np.argmax(fitness)
         best_solution = fireflies[best_idx].copy()
         best_fitness = fitness[best_idx]
         fitness_history = [best_fitness]
-        
+
         self.fireflies = fireflies
         self.fitness = fitness
-        
+        self.best_solution = best_solution
+        self.best_fitness = best_fitness
+        self.history = fitness_history
+
         return fireflies, fitness, best_solution, best_fitness, fitness_history
 
-    def _evaluate(self, solution):
-        """
-        Đánh giá fitness: tổng giá trị, phạt nếu vượt trọng lượng
-        """
-        total_value = np.sum(solution * self.values)
-        total_weight = np.sum(solution * self.weights)
-        
-        if total_weight > self.max_weight:
-            return 0  # phạt nặng: không hợp lệ
-        return total_value  # maximize
+    def evaluate(self, solution):
+        """Calculate fitness (total value) of solution.
 
-    def _hamming_distance(self, x, y):
-        """Khoảng cách Hamming giữa 2 binary vector"""
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
+        return np.sum(solution * self.values)
+
+    def hamming_distance(self, x, y):
+        """Calculate Hamming distance between two binary vectors.
+
+        Parameters:
+        x (np.ndarray): First binary vector
+        y (np.ndarray): Second binary vector
+
+        Returns:
+        int: Hamming distance (number of differing bits)
+        """
         return np.sum(x != y)
 
-    def _crossover(self, parent1, parent2):
-        """One-point crossover"""
-        if np.random.rand() < 0.8:  # 80% chance crossover
+    def crossover(self, parent1, parent2):
+        """Perform crossover between two parent solutions.
+
+        Parameters:
+        parent1 (np.ndarray): First parent solution
+        parent2 (np.ndarray): Second parent solution
+
+        Returns:
+        np.ndarray: Offspring solution
+        """
+        if np.random.rand() < 0.8:
             point = np.random.randint(1, self.n_items)
             child = np.concatenate([parent1[:point], parent2[point:]])
         else:
             child = parent1.copy()
         return child
 
-    def _mutate(self, solution):
-        """Bit-flip mutation"""
+    def mutate(self, solution):
+        """Mutate solution by flipping bits with probability alpha.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Mutated solution
+        """
         for i in range(self.n_items):
             if np.random.rand() < self.alpha:
-                solution[i] = 1 - solution[i]  # flip 0 ↔ 1
+                solution[i] = 1 - solution[i]
         return solution
 
-    def _repair(self, solution):
+    def repair(self, solution):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
         """
-        Sửa giải pháp nếu vượt trọng lượng (greedy drop)
-        """
-        total_weight = np.sum(solution * self.weights)
-        if total_weight <= self.max_weight:
-            return solution
-        
-        # Xóa item có value/weight thấp nhất
-        ratios = self.values / (self.weights + 1e-8)
-        item_ranks = np.argsort(ratios)
         sol = solution.copy()
-        for idx in item_ranks:
-            if sol[idx] == 1:
-                sol[idx] = 0
-                total_weight -= self.weights[idx]
-                if total_weight <= self.max_weight:
-                    break
+        while not self.is_valid(sol):
+            ones = np.where(sol == 1)[0]
+            if len(ones) == 0:
+                break
+            sol[np.random.choice(ones)] = 0
         return sol
 
-    def _move_firefly(self, i, j):
-        """
-        Đom đóm i di chuyển về j (nếu j tốt hơn)
+    def move_firefly(self, i, j):
+        """Move firefly i towards brighter firefly j.
+
+        Parameters:
+        i (int): Index of firefly to move
+        j (int): Index of brighter firefly
+
+        Returns:
+        None
         """
         if self.fitness[j] <= self.fitness[i]:
-            return  # không di chuyển
-        
-        # Tính độ hấp dẫn dựa trên Hamming distance
-        r = self._hamming_distance(self.fireflies[i], self.fireflies[j])
-        beta = self.beta0 * np.exp(-self.gamma * r)
-        
+            return
+
+        r = self.hamming_distance(self.fireflies[i], self.fireflies[j])
+        beta = self.beta * np.exp(-self.gamma * r)
+
         if np.random.rand() < beta:
-            # Crossover + Mutation
-            child = self._crossover(self.fireflies[i], self.fireflies[j])
-            child = self._mutate(child)
-            child = self._repair(child)
-            
-            # Cập nhật nếu tốt hơn
-            child_fitness = self._evaluate(child)
+            child = self.crossover(self.fireflies[i], self.fireflies[j])
+            child = self.mutate(child)
+            child = self.repair(child)
+
+            child_fitness = self.evaluate(child)
             if child_fitness > self.fitness[i]:
                 self.fireflies[i] = child
                 self.fitness[i] = child_fitness
 
     def run(self):
+        """Execute Firefly Algorithm for knapsack problem.
+
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
         """
-        Chạy FA cho Knapsack
-        """
-        fireflies, fitness, best_solution, best_fitness, fitness_history = self._initialize_population()
+        if self.verbose:
+            print("\n===== Start FA Knapsack =====")
+        (
+            fireflies,
+            fitness,
+            _,
+            _,
+            _
+        ) = self.initialize_population()
         alpha = self.alpha
-        
-        for iteration in range(self.max_iterations):
-            alpha *= 0.97  # giảm dần mutation
-            
-            # Mỗi đom đóm xem tất cả các đom đóm khác
+
+        for iteration in range(self.max_iter):
+            alpha *= 0.97
+
             for i in range(self.population_size):
                 for j in range(self.population_size):
                     if i != j:
-                        self._move_firefly(i, j)
-            
-            # Cập nhật best
-            current_best_idx = np.argmax(fitness)
-            if fitness[current_best_idx] > best_fitness:
-                best_fitness = fitness[current_best_idx]
-                best_solution = fireflies[current_best_idx].copy()
-            
-            fitness_history.append(best_fitness)
-            
-            # if (iteration + 1) % 50 == 0:
-            #     print(f"Iter {iteration+1}, Best Value: {best_fitness}")
+                        self.move_firefly(i, j)
 
-        print("\n--- Optimization Results (Firefly Knapsack) ---")
-        total_value = int(best_fitness)
-        total_weight = np.sum(best_solution * self.weights)
-        print(f"Best Value: {total_value}")
-        print(f"Total Weight: {total_weight} <= {self.max_weight}")
-        print(f"Selected Items: {best_solution}")
-        
-        return best_solution, total_value, fitness_history
+            current_best_idx = np.argmax(fitness)
+            if fitness[current_best_idx] > self.best_fitness:
+                self.best_fitness = fitness[current_best_idx]
+                self.best_solution = fireflies[current_best_idx].copy()
+
+            self.history.append(self.best_fitness)
+
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter - 1):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
+
+        if self.verbose:
+            print("--- Optimization Results (Firefly Knapsack) ---")
+            total_weight = np.sum(self.best_solution * self.weights)
+            print(f"Best Value: {self.best_fitness:.2f}")
+            print(f"Total Weight: {total_weight:.2f} <= {self.max_weight:.2f}")
+            print(f"Selected Items: {self.best_solution}")
+
+        return self.best_solution, self.best_fitness, self.history

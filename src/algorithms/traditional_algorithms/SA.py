@@ -2,6 +2,8 @@ import numpy as np
 
 
 class SimulatedAnnealing:
+    """Simulated Annealing algorithm for continuous optimization."""
+    
     def __init__(
         self,
         fitness_func,
@@ -12,8 +14,24 @@ class SimulatedAnnealing:
         step_size=0.1,
         initial_temp=100,
         seed=None,
-        verbose=False,
+        verbose=False
     ):
+        """Initialize Simulated Annealing algorithm.
+
+        Parameters:
+        fitness_func (callable): Objective function to minimize
+        lower_bound (float or array): Lower bounds for each dimension
+        upper_bound (float or array): Upper bounds for each dimension
+        dim (int): Problem dimension
+        max_iter (int): Maximum number of iterations
+        step_size (float): Step size for neighbor generation
+        initial_temp (float): Initial temperature
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -26,22 +44,57 @@ class SimulatedAnnealing:
         self.initial_temp = initial_temp
         self.verbose = verbose
 
+        self.best_solution = None
+        self.best_fitness = None
+        self.history = []
+
+    def generate_neighbor(self, solution):
+        """Generate neighboring solution by adding random perturbation.
+
+        Parameters:
+        solution (np.ndarray): Current solution vector
+
+        Returns:
+        np.ndarray: Neighbor solution
+        """
+        perturbation = np.random.uniform(
+            -self.step_size,
+            self.step_size,
+            size=self.dim
+        )
+        neighbor = np.clip(
+            solution + perturbation,
+            self.lower_bound,
+            self.upper_bound
+        )
+        return neighbor
 
     def run(self):
-        fitness_history = []
+        """Execute Simulated Annealing optimization.
 
-        current_solution = np.random.uniform(self.lower_bound, self.upper_bound, size=self.dim)
+        Parameters:
+        None
+
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
+        if self.verbose:
+            print("\n===== Start SA =====")
+        current_solution = np.random.uniform(
+            self.lower_bound,
+            self.upper_bound,
+            size=self.dim
+        )
         current_fitness = self.fitness_func(current_solution)
-        best_solution = current_solution.copy()
-        best_fitness = current_fitness
-        fitness_history.append(best_fitness)
+        self.best_solution = current_solution.copy()
+        self.best_fitness = current_fitness
+        self.history = [self.best_fitness]
 
         for i in range(1, self.max_iter + 1):
             temp = self.initial_temp * (1 - i / self.max_iter)
             temp = max(temp, 1e-8)
 
-            perturbation = np.random.uniform(-self.step_size, self.step_size, size=self.dim)
-            candidate = np.clip(current_solution + perturbation, self.lower_bound, self.upper_bound)
+            candidate = self.generate_neighbor(current_solution)
             candidate_fitness = self.fitness_func(candidate)
 
             accept = (
@@ -49,21 +102,29 @@ class SimulatedAnnealing:
                 or np.random.rand() < np.exp(-(candidate_fitness - current_fitness) / temp)
             )
 
-
             if accept:
                 current_solution = candidate
                 current_fitness = candidate_fitness
-                if current_fitness < best_fitness:
-                    best_solution = current_solution.copy()
-                    best_fitness = current_fitness
+                if current_fitness < self.best_fitness:
+                    self.best_solution = current_solution.copy()
+                    self.best_fitness = current_fitness
 
-            fitness_history.append(best_fitness)
-        print("\n--- Optimization Results (SimilateAnnealing) ---")
-        return best_solution, best_fitness, fitness_history
+            self.history.append(self.best_fitness)
 
+            if self.verbose and (i % 10 == 0 or i == self.max_iter):
+                print(f"Iteration {i}/{self.max_iter}: best fitness = {self.best_fitness:.6f}")
+
+        if self.verbose:
+            print("--- Optimization Results (SA) ---")
+            print(f"Best Fitness: {self.best_fitness:.6f}")
+            print(f"Best Solution: {self.best_solution}")
+
+        return self.best_solution, self.best_fitness, self.history
 
 
 class SimulatedAnnealingKnapsack:
+    """Simulated Annealing algorithm for knapsack problem."""
+    
     def __init__(
         self,
         weights,
@@ -74,8 +135,24 @@ class SimulatedAnnealingKnapsack:
         step_size=0.1,
         initial_temp=100,
         seed=None,
-        verbose=False,
+        verbose=False
     ):
+        """Initialize Simulated Annealing for knapsack problem.
+
+        Parameters:
+        weights (np.ndarray): Item weights
+        values (np.ndarray): Item values
+        capacity (float): Maximum weight capacity
+        dim (int, optional): Number of items, defaults to len(weights)
+        max_iter (int): Maximum number of iterations
+        step_size (float): Not used for knapsack (kept for compatibility)
+        initial_temp (float): Initial temperature
+        seed (int, optional): Random seed for reproducibility
+        verbose (bool): Whether to print progress information
+
+        Returns:
+        None
+        """
         if seed is not None:
             np.random.seed(seed)
 
@@ -88,32 +165,80 @@ class SimulatedAnnealingKnapsack:
         self.initial_temp = initial_temp
         self.verbose = verbose
 
+        self.best_solution = None
+        self.best_fitness = 0
+        self.history = []
+
     def fitness(self, solution):
+        """Calculate fitness (total value) of solution.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        float: Total value of selected items
+        """
         return np.sum(solution * self.values)
 
-    def validate(self, solution):
+    def is_valid(self, solution):
+        """Check if solution satisfies weight constraint.
+
+        Parameters:
+        solution (np.ndarray): Binary solution vector
+
+        Returns:
+        bool: True if solution is valid, False otherwise
+        """
         return np.sum(solution * self.weights) <= self.capacity
 
+    def repair(self, sol):
+        """Repair invalid solution by removing items until constraint is satisfied.
+
+        Parameters:
+        sol (np.ndarray): Binary solution vector
+
+        Returns:
+        np.ndarray: Repaired solution vector
+        """
+        while not self.is_valid(sol):
+            ones = np.where(sol == 1)[0]
+            if len(ones) == 0:
+                break
+            sol[np.random.choice(ones)] = 0
+        return sol
+
     def generate_neighbor(self, solution):
-        while True:
-            neighbor = solution.copy()
-            for i in range(self.dim):
-                if np.random.rand() < self.step_size:
-                    neighbor[i] = 1 - neighbor[i]
-            if self.validate(neighbor):
-                return neighbor
+        """Generate neighboring solution by flipping one bit (knapsack version).
+
+        Parameters:
+        solution (np.ndarray): Current binary solution vector
+
+        Returns:
+        np.ndarray: Neighbor solution (repaired if invalid)
+        """
+        neighbor = solution.copy()
+        i = np.random.randint(0, self.dim)
+        neighbor[i] = 1 - neighbor[i]
+        if not self.is_valid(neighbor):
+            neighbor = self.repair(neighbor)
+        return neighbor
 
     def run(self):
-        fitness_history = []
+        """Execute Simulated Annealing for knapsack problem.
 
-        current_solution = np.random.randint(0, 2, size=self.dim)
-        while not self.validate(current_solution):
-            current_solution = np.random.randint(0, 2, size=self.dim)
+        Parameters:
+        None
 
+        Returns:
+        tuple: (best_solution, best_fitness, history) where history is list of best fitness per iteration
+        """
+        if self.verbose:
+            print("\n===== Start SA Knapsack =====")
+        current_solution = np.zeros(self.dim, dtype=int)
         current_fitness = self.fitness(current_solution)
-        best_solution = current_solution.copy()
-        best_fitness = current_fitness
-        fitness_history.append(best_fitness)
+        self.best_solution = current_solution.copy()
+        self.best_fitness = current_fitness
+        self.history = [self.best_fitness]
 
         for iteration in range(1, self.max_iter + 1):
             temp = self.initial_temp / iteration
@@ -126,10 +251,18 @@ class SimulatedAnnealingKnapsack:
             ):
                 current_solution = neighbor
                 current_fitness = neighbor_fitness
-                if current_fitness > best_fitness:
-                    best_solution = current_solution
-                    best_fitness = current_fitness
+                if current_fitness > self.best_fitness:
+                    self.best_solution = current_solution.copy()
+                    self.best_fitness = current_fitness
 
-            fitness_history.append(best_fitness)
+            self.history.append(self.best_fitness)
 
-        return best_solution, best_fitness, fitness_history
+            if self.verbose and (iteration % 10 == 0 or iteration == self.max_iter):
+                print(f"Iteration {iteration}/{self.max_iter}: best fitness = {self.best_fitness:.2f}")
+
+        if self.verbose:
+            print("--- Optimization Results (SA Knapsack) ---")
+            print(f"Best Fitness: {self.best_fitness:.2f}")
+            print(f"Best Solution: {self.best_solution}")
+
+        return self.best_solution, self.best_fitness, self.history
