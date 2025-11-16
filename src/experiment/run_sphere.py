@@ -209,7 +209,7 @@ def run_experiments():
             })
     
     print_results(results)
-    pd.DataFrame(results).to_csv(f"results/resultsDIM_{timestamp}.csv", index=False)
+    pd.DataFrame(results).to_csv(f"results/resultsSphere_{timestamp}.csv", index=False)
     print("Result CSV saved!")
     print("\nFinish")
 
