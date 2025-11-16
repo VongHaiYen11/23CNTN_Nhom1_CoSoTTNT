@@ -16,7 +16,7 @@ from src.algorithms.traditional_algorithms.SA import SimulatedAnnealingKnapsack
 from src.problem.discrete.knapsack import WEIGHTS, VALUES, MAX_WEIGHT, N_ITEMS
 
 N_RUNS = 1
-POP_SIZES = [10]
+POP_SIZES = [50]
 MAX_ITERATIONS = 200
 SEED = 42
 VERBOSE = False

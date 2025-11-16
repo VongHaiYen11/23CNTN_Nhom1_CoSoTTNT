@@ -311,7 +311,7 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
         lower_values = [v for v in runtimes if v < upper_min]
         
         if len(upper_values) > 0 and len(lower_values) > 0:
-            upper_max = max(upper_values) * 1.15
+            upper_max = max(upper_values) * 1.25
             lower_max = max(lower_values) * 1.2
             
             # Top subplot: show upper portion (from upper_min to value) for high values
@@ -403,11 +403,16 @@ def plot_runtime_bar(results_dict, problem_type='sphere', save_path=None):
         ax.set_xticks(x)
         ax.set_xticklabels(algorithms)
         
-        # Set adaptive y-axis ticks
+        # Set adaptive y-axis ticks with padding
         tick_step = get_nice_tick_step(data_range, max_ticks=10)
         y_min = np.floor(min_runtime / tick_step) * tick_step
         y_max = np.ceil(max_runtime / tick_step) * tick_step
-        y_ticks = np.arange(y_min, y_max + tick_step, tick_step)
+        # Add padding: 5% at bottom, 15% at top
+        padding_bottom = (y_max - y_min) * 0.05
+        padding_top = (y_max - y_min) * 0.15
+        y_min = max(0, y_min - padding_bottom)
+        y_max = y_max + padding_top
+        y_ticks = np.arange(np.floor(y_min / tick_step) * tick_step, y_max + tick_step, tick_step)
         ax.set_yticks(y_ticks)
         ax.set_ylim(y_min, y_max)
         
