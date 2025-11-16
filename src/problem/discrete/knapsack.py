@@ -3,8 +3,8 @@ import numpy as np
 # Test case 1: 5 items
 TEST_CASE_5 = {
     'name': 'test_case_5',
-    'weights': np.array([4, 7, 2, 9, 5]),
-    'values':  np.array([10, 15, 8, 20, 12]),
+    'weights': np.array([4, 3, 6, 5, 7]),
+    'values':  np.array([12, 10, 20, 15, 18]),
     'max_weight': 15,
     'n_items': 5
 }
@@ -12,17 +12,17 @@ TEST_CASE_5 = {
 # Test case 2: 10 items
 TEST_CASE_10 = {
     'name': 'test_case_10',
-    'weights': np.array([3, 6, 2, 5, 7, 4, 8, 3, 6, 5]),
-    'values':  np.array([12, 18, 10, 15, 20, 13, 22, 11, 17, 14]),
-    'max_weight': 30,
+    'weights': np.array([10,2,5,12,6,7,11,20,3,9]),
+    'values':  np.array([25,8,15,30,5,18,22,40,9,28]),
+    'max_weight': 25,
     'n_items': 10
 }
 
 # Test case 3: 20 items
 TEST_CASE_20 = {
     'name': 'test_case_20',
-    'weights': np.array([2,3,4,5,6,3,4,5,6,7,2,3,4,5,6,3,4,5,6,7]),
-    'values':  np.array([5,8,12,15,18,7,10,14,17,20,5,8,12,15,18,7,10,14,17,20]),
+    'weights': np.array([18,4,3,20,9,30,5,10,12,7, 15,2,25,14,1,19,8,11,22,6]),
+    'values':  np.array([5,40,12,55,9,60,17,50,4,33, 20,7,65,14,3,28,45,10,70,25]),
     'max_weight': 50,
     'n_items': 20
 }
