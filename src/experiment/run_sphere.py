@@ -15,8 +15,8 @@ from src.algorithms.traditional_algorithms.HC import HillClimbing
 from src.algorithms.traditional_algorithms.SA import SimulatedAnnealing
 from src.problem.continuous.sphere import sphere
 
-N_RUNS = 1
-DIMS = [30]
+N_RUNS = 10
+DIMS = [10, 30, 50]
 POP_SIZES = [50]
 MAX_ITERATIONS = 350
 LOWER_BOUND = -5.12
@@ -25,7 +25,6 @@ SEED = 42
 VERBOSE = True
 
 ALGOS = ['FA', 'ABC', 'Cuckoo', 'PSO', 'HC', 'GA', 'SA', 'ACO']
-
 
 def measure_space_usage(obj):
     if isinstance(obj, np.ndarray):

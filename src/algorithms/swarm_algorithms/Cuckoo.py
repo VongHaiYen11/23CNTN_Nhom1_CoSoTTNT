@@ -1,7 +1,6 @@
 import numpy as np
 import math
 
-
 class CuckooSearch:
     def __init__(
         self,
